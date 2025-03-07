@@ -10,7 +10,7 @@ import { FiPlus } from "react-icons/fi";
 import { useStore } from "../store";
 import ProjectCard from "../components/ProjectCard";
 import CreateProjectModal from "../components/CreateProjectModal";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { getAllProjects } from "../services/http";
 
 const Projects = () => {
@@ -27,6 +27,15 @@ const Projects = () => {
   //     });
   //   }
   // }, [isOpen]);
+
+  const handleClose = useCallback(() => {
+    onClose();
+    getAllProjects().then((allProjects) => {
+      if (allProjects?.projects && allProjects.projects.length) {
+        setProjectList([...(allProjects.projects as [])]);
+      }
+    });
+  }, [onClose, projectList]);
 
   useEffect(() => {
     getAllProjects().then((allProjects) => {
@@ -60,7 +69,7 @@ const Projects = () => {
         )}
       </VStack>
 
-      <CreateProjectModal isOpen={isOpen} onClose={onClose} />
+      <CreateProjectModal isOpen={isOpen} onClose={handleClose} />
     </Container>
   );
 };

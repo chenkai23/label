@@ -9,10 +9,28 @@ interface LabelPreset {
   shortcut?: string;
 }
 
+// interface HistoryItem {
+//   imagePairId: string;
+//   type: "visible" | "infrared";
+//   annotations: Annotation[];
+// }
+
 interface HistoryItem {
-  imagePairId: string;
-  type: "visible" | "infrared";
-  annotations: Annotation[];
+  id: string;
+  visibleImage: {
+    annotations: Array<any>;
+    id: string;
+    url: string;
+    name: string;
+    type: "visible";
+  };
+  infraredImage: {
+    annotations: [];
+    id: string;
+    url: string;
+    name: string;
+    type: "infrared";
+  };
 }
 
 interface AppState {
@@ -25,11 +43,7 @@ interface AppState {
   setCurrentProject: (project: Project | null) => void;
   setCurrentImagePair: (imagePair: ImagePair | null) => void;
   addImagePair: (projectId: string, imagePair: ImagePair) => void;
-  updateAnnotations: (
-    imagePairId: string,
-    type: "visible" | "infrared",
-    annotations: Annotation[]
-  ) => void;
+  updateAnnotations: (imagePair: HistoryItem) => void;
   labelPresets: LabelPreset[];
   addLabelPreset: (preset: LabelPreset) => void;
   removeLabelPreset: (id: string) => void;
@@ -44,7 +58,7 @@ interface AppState {
   setCurrentLabel: (label: LabelPreset | null) => void;
   annotationHistory: HistoryItem[];
   maxHistoryLength: number;
-  undoAnnotation: () => void;
+  undoAnnotation: (setImagePair: Function) => void;
   setCurrentselectedBoxId: (boxId) => void;
   currentselectedBoxId: string | null;
 }
@@ -104,45 +118,56 @@ export const useStore = create<AppState>((set, get) => ({
           : project
       ),
     })),
-  updateAnnotations: (imagePairId, type, annotations) => {
-    set((state) => {
-      // 保存当前状态到历史记录
-      const currentState =
-        state.projects
-          .flatMap((p) => p.imagePairs)
-          .find((ip) => ip!.id === imagePairId)?.[
-          type === "visible" ? "visibleImage" : "infraredImage"
-        ]?.annotations || [];
+  // updateAnnotations: (imagePairId, type, annotations) => {
+  //   set((state) => {
+  //     // 保存当前状态到历史记录
+  //     const currentState =
+  //       state.projects
+  //         .flatMap((p) => p.imagePairs)
+  //         .find((ip) => ip?.id === imagePairId)?.[
+  //         type === "visible" ? "visibleImage" : "infraredImage"
+  //       ]?.annotations || [];
 
-      const newHistory = [
-        {
-          imagePairId,
-          type,
-          annotations: [...currentState],
-        },
-        ...state.annotationHistory,
-      ].slice(0, state.maxHistoryLength);
+  //     const newHistory = [
+  //       {
+  //         imagePairId,
+  //         type,
+  //         annotations: [...currentState],
+  //       },
+  //       ...state.annotationHistory,
+  //     ].slice(0, state.maxHistoryLength);
 
-      // 更新标注
-      const newProjects = state.projects.map((project) => ({
-        ...project,
-        imagePairs: project.imagePairs!.map((pair) => {
-          if (pair.id === imagePairId) {
-            return {
-              ...pair,
-              [type === "visible" ? "visibleImage" : "infraredImage"]: {
-                ...pair[type === "visible" ? "visibleImage" : "infraredImage"],
-                annotations,
-              },
-            };
-          }
-          return pair;
-        }),
-      }));
-
+  //     // 更新标注
+  //     const newProjects = state.projects.map((project) => ({
+  //       ...project,
+  //       imagePairs: project.imagePairs!.map((pair) => {
+  //         if (pair.id === imagePairId) {
+  //           return {
+  //             ...pair,
+  //             [type === "visible" ? "visibleImage" : "infraredImage"]: {
+  //               ...pair[type === "visible" ? "visibleImage" : "infraredImage"],
+  //               annotations,
+  //             },
+  //           };
+  //         }
+  //         return pair;
+  //       }),
+  //     }));
+  //     debugger;
+  //     return {
+  //       annotationHistory: newHistory,
+  //       projects: newProjects,
+  //     };
+  //   });
+  // },
+  updateAnnotations: (imagePair) => {
+    set((state: any) => {
+      const newHistory = [imagePair, ...state.annotationHistory].slice(
+        0,
+        state.maxHistoryLength
+      );
       return {
         annotationHistory: newHistory,
-        projects: newProjects,
       };
     });
   },
@@ -169,35 +194,47 @@ export const useStore = create<AppState>((set, get) => ({
   setCurrentLabel: (label) => set({ currentLabel: label }),
   annotationHistory: [],
   maxHistoryLength: 20, // 保存最近20次操作
-  undoAnnotation: () => {
-    set((state) => {
+  undoAnnotation: (setImagePair) => {
+    set((state: any) => {
       if (state.annotationHistory.length === 0) return state;
 
       const [lastHistory, ...remainingHistory] = state.annotationHistory;
-      const { imagePairId, type, annotations } = lastHistory;
 
-      const newProjects = state.projects.map((project) => ({
-        ...project,
-        imagePairs: project.imagePairs!.map((pair) => {
-          if (pair.id === imagePairId) {
-            return {
-              ...pair,
-              [type === "visible" ? "visibleImage" : "infraredImage"]: {
-                ...pair[type === "visible" ? "visibleImage" : "infraredImage"],
-                annotations,
-              },
-            };
-          }
-          return pair;
-        }),
-      }));
-
+      setImagePair(lastHistory);
       return {
         annotationHistory: remainingHistory,
-        projects: newProjects,
       };
     });
   },
+  // undoAnnotation: () => {
+  //   set((state) => {
+  //     if (state.annotationHistory.length === 0) return state;
+
+  //     const [lastHistory, ...remainingHistory] = state.annotationHistory;
+  //     const { imagePairId, type, annotations } = lastHistory;
+
+  //     const newProjects = state.projects.map((project) => ({
+  //       ...project,
+  //       imagePairs: project.imagePairs!.map((pair) => {
+  //         if (pair.id === imagePairId) {
+  //           return {
+  //             ...pair,
+  //             [type === "visible" ? "visibleImage" : "infraredImage"]: {
+  //               ...pair[type === "visible" ? "visibleImage" : "infraredImage"],
+  //               annotations,
+  //             },
+  //           };
+  //         }
+  //         return pair;
+  //       }),
+  //     }));
+  //     debugger;
+  //     return {
+  //       annotationHistory: remainingHistory,
+  //       projects: newProjects,
+  //     };
+  //   });
+  // },
   currentselectedBoxId: null, // 当前选中的标注框id
   setCurrentselectedBoxId: (boxId) => set({ currentselectedBoxId: boxId }),
 }));

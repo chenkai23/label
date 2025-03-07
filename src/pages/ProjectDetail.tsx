@@ -16,10 +16,11 @@ import { useParams } from "react-router-dom";
 import { useStore } from "../store";
 import ImageCard from "../components/ImageCard";
 import UploadModal from "../components/UploadModal";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import React from "react";
 import UploadFolderModal from "../components/UploadFolderModal";
 import { getProjectInfo } from "../services/http";
+import AutoAnnotateButton from "../components/AutoAnnotateButton";
 
 const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -52,6 +53,17 @@ const ProjectDetail = () => {
   // if (!project) {
   //   return <Container>项目不存在</Container>;
   // }
+
+  const handleClose = useCallback(() => {
+    onUploadFolderModalClose();
+    getProjectInfo({
+      projectId: id,
+    }).then((res) => {
+      if (res) {
+        setProjectInfo(res);
+      }
+    });
+  }, [onUploadFolderModalClose]);
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -101,6 +113,13 @@ const ProjectDetail = () => {
             >
               导出标注
             </Button>
+            <AutoAnnotateButton
+              imageInfoArr={projectInfo?.imageGroups}
+              onAnnotationsChange={() => {}}
+              // onAnnotationsChange={(annotations, type) =>
+              //   handleAnnotationChange(annotations, type)
+              // }
+            />
           </HStack>
         </HStack>
 
@@ -158,7 +177,7 @@ const ProjectDetail = () => {
       <UploadFolderModal
         id={id}
         isOpen={isUploadFolderModalOpen}
-        onClose={onUploadFolderModalClose}
+        onClose={handleClose}
         // projectId={project.id}
       />
     </Container>

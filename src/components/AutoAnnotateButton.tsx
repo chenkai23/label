@@ -11,10 +11,21 @@ import { useState } from "react";
 import { FiCpu, FiChevronDown } from "react-icons/fi";
 import { Image, Annotation } from "../types/project";
 import React from "react";
+import { autoAnnotate, getImage } from "../services/http";
+import { byteToImage } from "../utils/common";
+import { useParams } from "react-router-dom";
 
 interface AutoAnnotateButtonProps {
-  visibleImage: Image;
-  infraredImage: Image;
+  // visibleImageArr: Image[];
+  // infraredImageArr: Image[];
+  imageInfoArr: {
+    id: number;
+    infraredImageId: string;
+    infraredNum: number;
+    visibleImageId: string;
+    visibleImageName: string;
+    visibleNum: number;
+  }[];
   onAnnotationsChange: (
     annotations: Annotation[],
     type: "visible" | "infrared"
@@ -22,13 +33,12 @@ interface AutoAnnotateButtonProps {
 }
 
 const AutoAnnotateButton = ({
-  visibleImage,
-  infraredImage,
+  imageInfoArr,
   onAnnotationsChange,
 }: AutoAnnotateButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
-
+  const { id } = useParams<{ id: string }>();
   const getImageData = async (url: string) => {
     // 如果是 Blob URL，先获取 Blob 数据
     if (url.startsWith("blob:")) {
@@ -47,57 +57,64 @@ const AutoAnnotateButton = ({
     return url;
   };
 
-  const handleAutoAnnotate = async (type: "visible" | "infrared") => {
+  const handleAutoAnnotate = async () => {
     setIsLoading(true);
     try {
-      const image = type === "visible" ? visibleImage : infraredImage;
-
-      // 获取图片数据
-      const imageData = await getImageData(image.url);
-
-      const response = await fetch(`http://localhost:5050/api/auto-annotate`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          imageId: image.id,
-          imageUrl: imageData,
-          type: type,
-        }),
+      let imageArr: { id: number; url: string; annotations: any[] }[] = [];
+      imageArr = imageInfoArr.map((imageInfo) => ({
+        id: imageInfo.id,
+        url: "",
+        annotations: [],
+      }));
+      let promises: Promise<any>[] = [];
+      imageArr.forEach(async (image) => {
+        promises.push(
+          autoAnnotate({
+            groupId: image.id,
+            projectId: id,
+          })
+        );
       });
-
-      if (!response.ok) {
-        throw new Error("自动标注失败");
-      }
-
-      const result = await response.json();
-
-      if (result.annotations && result.annotations.length > 0) {
-        // 合并现有标注和自动标注结果
-        const newAnnotations = [
-          ...image.annotations,
-          ...result.annotations.map((ann) => ({
-            ...ann,
-            id: `auto_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          })),
-        ];
-
-        onAnnotationsChange(newAnnotations, type);
-
-        toast({
-          title: "自动标注完成",
-          description: `新增 ${result.annotations.length} 个标注`,
-          status: "success",
-          duration: 2000,
+      Promise.all(promises)
+        .then((res) => {
+          toast({
+            title: "自动标注完成",
+            description: `${res.length}个照片组完成标注`,
+            status: "success",
+            duration: 2000,
+          });
+          // if (
+          //   res.annotations.infrared.length ||
+          //   res.annotations.visible.length
+          // ) {
+          //   toast({
+          //     title: "自动标注完成",
+          //     description: `新增 ${
+          //       res.annotations.infrared.length +
+          //       res.annotations.visible.length
+          //     } 个标注`,
+          //     status: "success",
+          //     duration: 2000,
+          //   });
+          // } else {
+          //   toast({
+          //     title: "未检测到目标",
+          //     status: "info",
+          //     duration: 2000,
+          //   });
+          // }
+        })
+        .catch((error) => {
+          toast({
+            title: "自动标注失败",
+            description: "请稍后重试",
+            status: "error",
+            duration: 2000,
+          });
+        })
+        .finally(() => {
+          setIsLoading(false);
         });
-      } else {
-        toast({
-          title: "未检测到目标",
-          status: "info",
-          duration: 2000,
-        });
-      }
     } catch (error) {
       console.error("Auto annotation error:", error);
       toast({
@@ -106,35 +123,33 @@ const AutoAnnotateButton = ({
         status: "error",
         duration: 2000,
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return (
     <Menu>
       <Tooltip label="使用 AI 自动标注" placement="right">
-        <MenuButton
-          as={Button}
+        <Button
+          w={20}
           leftIcon={<FiCpu />}
-          rightIcon={<FiChevronDown />}
           isLoading={isLoading}
           loadingText="正在标注"
           variant="outline"
           size="sm"
           colorScheme="brand"
+          onClick={() => handleAutoAnnotate()}
         >
           AI
-        </MenuButton>
+        </Button>
       </Tooltip>
-      <MenuList>
+      {/* <MenuList>
         <MenuItem onClick={() => handleAutoAnnotate("visible")}>
           标注可见光图像
         </MenuItem>
         <MenuItem onClick={() => handleAutoAnnotate("infrared")}>
           标注红外图像
         </MenuItem>
-      </MenuList>
+      </MenuList> */}
     </Menu>
   );
 };

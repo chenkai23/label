@@ -138,10 +138,13 @@ const LabelPanel = ({
                           cursor={"pointer"}
                           size="md"
                           variant="subtle"
-                          bg={colorMode === "dark" ? "gray.700" : "gray.50"}
+                          bg={annotation.color}
                           _hover={{
-                            bg: colorMode === "dark" ? "gray.600" : "gray.100",
+                            opacity: 0.8,
                           }}
+                          opacity={
+                            currentselectedBoxId === annotation.id ? 0.4 : 1
+                          }
                           onClick={() =>
                             onAnnotationSelect?.(annotation.id, "visible")
                           }
@@ -208,10 +211,13 @@ const LabelPanel = ({
                           cursor={"pointer"}
                           size="md"
                           variant="subtle"
-                          bg={colorMode === "dark" ? "gray.700" : "gray.50"}
+                          bg={annotation.color}
                           _hover={{
-                            bg: colorMode === "dark" ? "gray.600" : "gray.100",
+                            opacity: 0.8,
                           }}
+                          opacity={
+                            currentselectedBoxId === annotation.id ? 0.4 : 1
+                          }
                           onClick={() =>
                             onAnnotationSelect?.(annotation.id, "infrared")
                           }

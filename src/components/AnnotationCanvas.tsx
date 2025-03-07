@@ -23,6 +23,7 @@ interface AnnotationCanvasProps {
   selectedId?: string | null;
   onAnnotationChange?: (annotations: Annotation[]) => void;
   syncAnnotation?: (annotation: Annotation) => void;
+  setImagePair: Function;
 }
 
 const AnnotationRect = memo(
@@ -39,7 +40,7 @@ const AnnotationRect = memo(
     }, [isSelected]);
 
     // 获取标签对应的颜色
-    const color = getLabelColor(annotation.label);
+    const color = annotation.color;
 
     return (
       <>
@@ -75,7 +76,7 @@ const AnnotationRect = memo(
           dash={[]} // 移除虚线效果
           draggable={props.draggable}
           fill={color} // 填充颜色
-          opacity={0.15} // 降低填充透明度
+          opacity={0.5} // 降低填充透明度
           {...props}
         />
         {isSelected && (
@@ -108,6 +109,7 @@ const AnnotationCanvas = ({
   selectedId: externalSelectedId,
   onAnnotationChange,
   syncAnnotation,
+  setImagePair,
 }: AnnotationCanvasProps) => {
   const stageRef = useRef<any>(null);
   const [imageObj, setImageObj] = useState<HTMLImageElement | null>(null);
@@ -129,6 +131,9 @@ const AnnotationCanvas = ({
   const labelPresets = useStore((state) => state.labelPresets);
   const setCurrentLabel = useStore((state) => state.setCurrentLabel);
   const loadingHeight = useRef<any>();
+  useEffect(() => {
+    setInternalSelectedId(null);
+  }, []);
   // 加载图片
   useEffect(() => {
     if (!image?.url) return;
@@ -331,7 +336,7 @@ const AnnotationCanvas = ({
       if (isCtrlOrCmd && e.key.toLowerCase() === "z") {
         // 撤销操作
         e.preventDefault(); // 阻止浏览器默认的撤销行为
-        useStore.getState().undoAnnotation();
+        useStore.getState().undoAnnotation(setImagePair);
         return;
       }
 

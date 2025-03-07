@@ -43,6 +43,14 @@ const CreateProjectModal = ({ isOpen, onClose }: CreateProjectModalProps) => {
       });
       return;
     }
+    if (!label.trim()) {
+      toast({
+        title: "请输入标签",
+        status: "error",
+        duration: 2000,
+      });
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -84,9 +92,11 @@ const CreateProjectModal = ({ isOpen, onClose }: CreateProjectModalProps) => {
             status: "error",
             duration: 2000,
           });
+        })
+        .finally(() => {
+          onClose();
         });
 
-      onClose();
       setName("");
       setDescription("");
     } catch (error) {
@@ -117,7 +127,7 @@ const CreateProjectModal = ({ isOpen, onClose }: CreateProjectModalProps) => {
                 placeholder="输入项目名称"
               />
             </FormControl>
-            <FormControl>
+            <FormControl isRequired>
               <FormLabel>预设标签</FormLabel>
               <Input
                 value={label}

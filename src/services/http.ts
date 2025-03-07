@@ -44,3 +44,8 @@ export const manualAnnotations = async (data) => {
   const response = await http.post(`/manualAnnotations`, data);
   return response.data;
 };
+
+export const autoAnnotate = async (data) => {
+  const response = await http.post(`/autoAnnotate`, data);
+  return response.data;
+};

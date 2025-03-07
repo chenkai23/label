@@ -83,25 +83,32 @@ const AnnotationPage = () => {
 
   const [imagePair, setImagePair] = useState<any>();
   useEffect(() => {
+    setCurrentLabel(null);
     getImageGroupsInfo({ groupId: id }).then((res) => {
       setProjectInfo(res);
       getProjectInfo({ projectId: res?.projectId }).then((res) => {
         setPresets(res?.tags);
       });
+      let visible = res?.manualAnnotations.visible
+        ? res?.manualAnnotations.visible
+        : [];
+      let infrared = res?.manualAnnotations.infrared
+        ? res?.manualAnnotations.infrared
+        : [];
+      let yoloVisible = res?.yoloData.visible ? res?.yoloData.visible : [];
+      let yoloInfrared = res?.yoloData.infrared ? res?.yoloData.infrared : [];
+      let vAnnotations = visible.concat(yoloVisible);
+      let iAnnotations = infrared.concat(yoloInfrared);
       setImagePair({
         visibleImage: {
-          annotations: res?.manualAnnotations.visible
-            ? res?.manualAnnotations.visible
-            : [],
+          annotations: vAnnotations,
           id: res?.visibleImageId,
           url: res?.visibleImageId,
           name: res?.visibleImageId,
           type: "visible",
         },
         infraredImage: {
-          annotations: res?.manualAnnotations.infrared
-            ? res?.manualAnnotations.infrared
-            : [],
+          annotations: iAnnotations,
           id: res?.infraredImageId,
           url: res?.infraredImageId,
           name: res?.infraredImageId,
@@ -119,26 +126,29 @@ const AnnotationPage = () => {
     if (!(projectInfo.visibleImageId || projectInfo.infraredImageId)) return;
 
     try {
-      useStore.getState().updateAnnotations(id ? id : "", type, newAnnotations);
       let cloneImagePair = cloneDeep(imagePair);
       if (type === "visible") {
-        setImagePair({
+        const newImagePair = {
           ...imagePair,
           visibleImage: {
             ...imagePair.visibleImage,
             annotations: newAnnotations,
           },
-        });
+        };
+        useStore.getState().updateAnnotations(newImagePair);
+        setImagePair(newImagePair);
         cloneImagePair.visibleImage.annotations = newAnnotations;
       }
       if (type === "infrared") {
-        setImagePair({
+        const newImagePair = {
           ...imagePair,
           infraredImage: {
             ...imagePair.infraredImage,
             annotations: newAnnotations,
           },
-        });
+        };
+        useStore.getState().updateAnnotations(newImagePair);
+        setImagePair(newImagePair);
         cloneImagePair.infraredImage.annotations = newAnnotations;
       }
       manualAnnotations({
@@ -169,6 +179,7 @@ const AnnotationPage = () => {
           });
         });
     } catch (error) {
+      console.log("error :>> ", error);
       toast({
         title: "保存失败",
         description: "请稍后重试",
@@ -261,13 +272,13 @@ const AnnotationPage = () => {
           currentTool={currentTool}
           onToolChange={setCurrentTool}
         />
-        <AutoAnnotateButton
+        {/* <AutoAnnotateButton
           visibleImage={imagePair.visibleImage}
           infraredImage={imagePair.infraredImage}
           onAnnotationsChange={(annotations, type) =>
             handleAnnotationChange(annotations, type)
           }
-        />
+        /> */}
       </VStack>
 
       {/* 中间双画布区域 */}
@@ -295,6 +306,7 @@ const AnnotationPage = () => {
                 handleSyncAnnotation(annotation, "visible")
               }
               selectedId={selectedId?.type === "visible" ? selectedId.id : null}
+              setImagePair={setImagePair}
             />
           </Box>
 
@@ -318,6 +330,7 @@ const AnnotationPage = () => {
               selectedId={
                 selectedId?.type === "infrared" ? selectedId.id : null
               }
+              setImagePair={setImagePair}
             />
           </Box>
         </Flex>
@@ -345,6 +358,7 @@ const AnnotationPage = () => {
                   size="md"
                   variant="subtle"
                   bg={preset.color}
+                  opacity={currentLabel?.id === preset.id ? 0.4 : 1}
                   _hover={{
                     opacity: 0.8,
                   }}

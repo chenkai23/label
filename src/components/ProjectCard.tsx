@@ -34,7 +34,7 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
           <Text fontSize="lg" fontWeight="bold" noOfLines={1}>
             {project.name}
           </Text>
-          <Text fontSize="sm" color="gray.500" noOfLines={2}>
+          <Text fontSize="sm" color="gray.500" noOfLines={2} h={5}>
             {project.description}
           </Text>
           <HStack>

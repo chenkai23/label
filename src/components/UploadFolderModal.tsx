@@ -12,7 +12,7 @@ import {
   useToast,
   Box,
 } from "@chakra-ui/react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Upload, message } from "antd";
 import { uploadImageGroups } from "../services/http";
 
@@ -20,8 +20,11 @@ const { Dragger } = Upload;
 
 const UploadFolderModal = ({ isOpen, onClose, id }) => {
   const [files, setFiles] = useState<any[]>([]);
+  const [uploadLoading, setUploadLoading] = useState(false);
   const toast = useToast();
-
+  useEffect(() => {
+    setFiles([]);
+  }, [isOpen]);
   const uploadProps: any = {
     name: "file",
     multiple: true,
@@ -43,6 +46,7 @@ const UploadFolderModal = ({ isOpen, onClose, id }) => {
   };
 
   const handleUpload = async () => {
+    setUploadLoading(true);
     if (files.length === 0) {
       toast({
         title: "请上传文件夹",
@@ -81,8 +85,8 @@ const UploadFolderModal = ({ isOpen, onClose, id }) => {
           formData.append("projectId", id); // 替换为实际的 projectId
           formData.append("visibleImage", files[i]); // 替换为实际的 visibleImage 文件
           formData.append("infraredImage", files[j]); // 替换为实际的 infraredImage 文件
-          // formData.append("visibleImageName", files[i].name); // 替换为实际的 infraredImage 文件
-          // formData.append("infraredImageName", files[j].name); // 替换为实际的 infraredImage 文件
+          formData.append("visibleImageName", files[i].name);
+          formData.append("infraredImageName", files[j].name);
           promises.push(uploadImageGroups(formData));
         }
       }
@@ -104,6 +108,10 @@ const UploadFolderModal = ({ isOpen, onClose, id }) => {
           status: "error",
           duration: 2000,
         });
+      })
+      .finally(() => {
+        setUploadLoading(false);
+        onClose();
       });
   };
 
@@ -136,6 +144,7 @@ const UploadFolderModal = ({ isOpen, onClose, id }) => {
             colorScheme="brand"
             onClick={handleUpload}
             isDisabled={files.length === 0}
+            isLoading={uploadLoading}
           >
             上传
           </Button>
