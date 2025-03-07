@@ -33,7 +33,6 @@ const AnnotationStats = ({
   const currentselectedBoxId = useStore((state) => state.currentselectedBoxId);
   // 统计可见光标注
   const visibleLabelCounts = visibleImage.annotations.reduce((acc, curr) => {
-    console.log("visibleImage :>> ", visibleImage);
     acc[curr.label] = (acc[curr.label] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
@@ -59,7 +58,6 @@ const AnnotationStats = ({
     let labelInfo = allImagesInfo.find(
       (item) => item.id === currentselectedBoxId
     );
-    console.log("labelINfo :>> ", labelInfo);
     return labelInfo;
   }, [currentselectedBoxId]);
 
@@ -68,7 +66,6 @@ const AnnotationStats = ({
       <Tabs>
         <TabList>
           <Tab>标注统计</Tab>
-          <Tab>标注信息</Tab>
         </TabList>
 
         <TabPanels>
@@ -155,29 +152,14 @@ const AnnotationStats = ({
               )}
             </VStack>
           </TabPanel>
-          <TabPanel>
-            {currentLabelinfo ? (
-              <VStack align="stretch" spacing={4}>
-                <Tag size="sm">X: {currentLabelinfo?.bbox[0]}</Tag>
-
-                <Tag size="sm">Y: {currentLabelinfo?.bbox[1]}</Tag>
-                <Tag size="sm">W: {currentLabelinfo?.bbox[2]}</Tag>
-                <Tag size="sm">H: {currentLabelinfo?.bbox[3]}</Tag>
-              </VStack>
-            ) : (
-              <Text fontSize="sm" color="gray.500" textAlign="center" py={4}>
-                请选择标注框
-              </Text>
-            )}
-          </TabPanel>
         </TabPanels>
       </Tabs>
 
       {/* <Text fontSize="lg" fontWeight="bold" mb={4}>
         标注统计
-      </Text> */}
+      </Text>
 
-      {/* <VStack align="stretch" spacing={4}>
+      <VStack align="stretch" spacing={4}>
         {allLabels.map((label) => (
           <Box key={label}>
             <Text fontSize="sm" mb={1} fontWeight="medium">

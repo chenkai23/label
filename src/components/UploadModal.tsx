@@ -17,7 +17,7 @@ import {
   TabPanel,
   Tab,
 } from "@chakra-ui/react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useStore } from "../store";
 import { ImagePair } from "../types/project";
@@ -35,7 +35,10 @@ const UploadModal = ({ isOpen, onClose, projectId }: UploadModalProps) => {
   const [infraredImage, setInfraredImage] = useState<File | null>(null);
   const toast = useToast();
   const addImagePair = useStore((state) => state.addImagePair);
-
+  useEffect(() => {
+    setVisibleImage(null);
+    setInfraredImage(null);
+  }, [isOpen]);
   const handleDrop = useCallback(
     (acceptedFiles: File[], type: "visible" | "infrared") => {
       if (acceptedFiles.length > 0) {

@@ -12,6 +12,8 @@ import { memo } from "react";
 import { useStore } from "../store/index";
 import { getLabelColor } from "../utils/colors";
 import React from "react";
+import { getImage } from "../services/http";
+import { byteToImage } from "../utils/common";
 
 interface AnnotationCanvasProps {
   image: ImageType;
@@ -21,6 +23,18 @@ interface AnnotationCanvasProps {
   selectedId?: string | null;
   onAnnotationChange?: (annotations: Annotation[]) => void;
   syncAnnotation?: (annotation: Annotation) => void;
+  setImagePair: Function;
+}
+
+function convertToRGBA(color, alpha) {
+  // 提取 RGB 值
+  const rgbValues = color.match(/\d+/g);
+  if (!rgbValues || rgbValues.length !== 3) {
+    throw new Error("Invalid RGB color format");
+  }
+
+  // 返回 RGBA 字符串
+  return `rgba(${rgbValues[0]}, ${rgbValues[1]}, ${rgbValues[2]}, ${alpha})`;
 }
 
 const AnnotationRect = memo(
@@ -37,7 +51,7 @@ const AnnotationRect = memo(
     }, [isSelected]);
 
     // 获取标签对应的颜色
-    const color = getLabelColor(annotation.label);
+    const color = annotation.color;
 
     return (
       <>
@@ -68,12 +82,30 @@ const AnnotationRect = memo(
               ],
             });
           }}
+          onDragEnd={() => {
+            const node = shapeRef.current;
+            const scaleX = node.scaleX();
+            const scaleY = node.scaleY();
+
+            node.scaleX(1);
+            node.scaleY(1);
+
+            onChange({
+              ...annotation,
+              bbox: [
+                node.x(),
+                node.y(),
+                Math.abs(node.width() * scaleX),
+                Math.abs(node.height() * scaleY),
+              ],
+            });
+          }}
           stroke={color} // 边框颜色
           strokeWidth={isSelected ? 4 : 3} // 增加线宽
           dash={[]} // 移除虚线效果
           draggable={props.draggable}
-          fill={color} // 填充颜色
-          opacity={0.15} // 降低填充透明度
+          fill={convertToRGBA(color, 0.25)} // 填充颜色
+          opacity={0.7} // 降低填充透明度
           {...props}
         />
         {isSelected && (
@@ -106,6 +138,7 @@ const AnnotationCanvas = ({
   selectedId: externalSelectedId,
   onAnnotationChange,
   syncAnnotation,
+  setImagePair,
 }: AnnotationCanvasProps) => {
   const stageRef = useRef<any>(null);
   const [imageObj, setImageObj] = useState<HTMLImageElement | null>(null);
@@ -117,7 +150,8 @@ const AnnotationCanvas = ({
   const setInternalSelectedId = useStore(
     (state) => state.setCurrentselectedBoxId
   );
-  const selectedId = externalSelectedId ?? internalSelectedId;
+  // const selectedId = externalSelectedId ?? internalSelectedId;
+  const selectedId = internalSelectedId;
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const { colorMode } = useColorMode();
@@ -126,14 +160,34 @@ const AnnotationCanvas = ({
   const labelPresets = useStore((state) => state.labelPresets);
   const setCurrentLabel = useStore((state) => state.setCurrentLabel);
 
+  const loadingHeight = useRef<any>();
+  useEffect(() => {
+    setInternalSelectedId(null);
+  }, []);
   // 加载图片
   useEffect(() => {
     if (!image?.url) return;
+    getImage({
+      id: image.id,
+    }).then((res) => {
+      const blob = new Blob([res.data], { type: "image/jpeg" }); // 根据实际情况调整 MIME 类型
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        // 创建 Image 对象
+        const img: any = new Image();
+        img.crossOrigin = "anonymous";
+        // 将 dataURL 赋值给 Image 对象的 src 属性
+        img.src = event.target!.result;
 
-    const img = new window.Image();
-    img.crossOrigin = "anonymous";
-    img.src = image.url;
-    img.onload = () => setImageObj(img);
+        // 图片加载完成后传递给 Konva.Image
+        img.onload = function () {
+          setImageObj(img);
+        };
+      };
+      if (blob) {
+        reader.readAsDataURL(blob);
+      }
+    });
   }, [image?.url]);
 
   // 同步标注数据
@@ -312,7 +366,7 @@ const AnnotationCanvas = ({
       if (isCtrlOrCmd && e.key.toLowerCase() === "z") {
         // 撤销操作
         e.preventDefault(); // 阻止浏览器默认的撤销行为
-        useStore.getState().undoAnnotation();
+        useStore.getState().undoAnnotation(setImagePair);
         return;
       }
 
@@ -412,6 +466,7 @@ const AnnotationCanvas = ({
         display="flex"
         alignItems="center"
         justifyContent="center"
+        ref={loadingHeight}
       >
         <Text>无图片数据</Text>
       </Box>
@@ -426,6 +481,7 @@ const AnnotationCanvas = ({
         display="flex"
         alignItems="center"
         justifyContent="center"
+        ref={loadingHeight}
       >
         <Text>图片加载中...</Text>
       </Box>
@@ -440,7 +496,7 @@ const AnnotationCanvas = ({
       <Stage
         ref={stageRef}
         width={dimensions.width}
-        height={dimensions.height}
+        height={dimensions.height - 150}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
