@@ -26,10 +26,7 @@ interface AutoAnnotateButtonProps {
     visibleImageName: string;
     visibleNum: number;
   }[];
-  onAnnotationsChange: (
-    annotations: Annotation[],
-    type: "visible" | "infrared"
-  ) => void;
+  onAnnotationsChange: () => void;
 }
 
 const AutoAnnotateButton = ({
@@ -77,32 +74,13 @@ const AutoAnnotateButton = ({
       });
       Promise.all(promises)
         .then((res) => {
+          onAnnotationsChange();
           toast({
             title: "自动标注完成",
             description: `${res.length}个照片组完成标注`,
             status: "success",
             duration: 2000,
           });
-          // if (
-          //   res.annotations.infrared.length ||
-          //   res.annotations.visible.length
-          // ) {
-          //   toast({
-          //     title: "自动标注完成",
-          //     description: `新增 ${
-          //       res.annotations.infrared.length +
-          //       res.annotations.visible.length
-          //     } 个标注`,
-          //     status: "success",
-          //     duration: 2000,
-          //   });
-          // } else {
-          //   toast({
-          //     title: "未检测到目标",
-          //     status: "info",
-          //     duration: 2000,
-          //   });
-          // }
         })
         .catch((error) => {
           toast({
@@ -142,14 +120,6 @@ const AutoAnnotateButton = ({
           AI
         </Button>
       </Tooltip>
-      {/* <MenuList>
-        <MenuItem onClick={() => handleAutoAnnotate("visible")}>
-          标注可见光图像
-        </MenuItem>
-        <MenuItem onClick={() => handleAutoAnnotate("infrared")}>
-          标注红外图像
-        </MenuItem>
-      </MenuList> */}
     </Menu>
   );
 };

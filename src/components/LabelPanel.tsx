@@ -66,7 +66,7 @@ const LabelPanel = ({
       (item) => item.id === currentselectedBoxId
     );
     return labelInfo;
-  }, [currentselectedBoxId]);
+  }, [currentselectedBoxId, visibleImage]);
   const handleAddLabel = (label: string) => {
     if (!label.trim()) return;
 
@@ -153,8 +153,7 @@ const LabelPanel = ({
                           <TagLabel>
                             {annotation.label}&nbsp;
                             {annotation.confidence
-                              ? `(置信度:
-                            ${annotation.confidence})`
+                              ? `(置信度:${annotation.confidence.toFixed(2)})`
                               : ""}
                           </TagLabel>
                           <TagRightIcon
@@ -227,7 +226,7 @@ const LabelPanel = ({
                             {annotation.label}&nbsp;
                             {annotation.confidence
                               ? `(置信度:
-                            ${annotation.confidence})`
+                            ${annotation.confidence.toFixed(2)})`
                               : ""}
                           </TagLabel>
                           <TagRightIcon

@@ -82,6 +82,10 @@ const AnnotationPage = () => {
   // };
 
   const [imagePair, setImagePair] = useState<any>();
+  const initAnnotationHistory = useStore(
+    (state) => state.initAnnotationHistory
+  );
+  const updateAnnotations = useStore((state) => state.updateAnnotations);
   useEffect(() => {
     setCurrentLabel(null);
     getImageGroupsInfo({ groupId: id }).then((res) => {
@@ -115,6 +119,23 @@ const AnnotationPage = () => {
           type: "infrared",
         },
       });
+      initAnnotationHistory();
+      updateAnnotations({
+        visibleImage: {
+          annotations: vAnnotations,
+          id: res?.visibleImageId,
+          url: res?.visibleImageId,
+          name: res?.visibleImageId,
+          type: "visible",
+        },
+        infraredImage: {
+          annotations: iAnnotations,
+          id: res?.infraredImageId,
+          url: res?.infraredImageId,
+          name: res?.infraredImageId,
+          type: "infrared",
+        },
+      } as any);
     });
   }, []);
 

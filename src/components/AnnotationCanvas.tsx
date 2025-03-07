@@ -26,6 +26,17 @@ interface AnnotationCanvasProps {
   setImagePair: Function;
 }
 
+function convertToRGBA(color, alpha) {
+  // 提取 RGB 值
+  const rgbValues = color.match(/\d+/g);
+  if (!rgbValues || rgbValues.length !== 3) {
+    throw new Error("Invalid RGB color format");
+  }
+
+  // 返回 RGBA 字符串
+  return `rgba(${rgbValues[0]}, ${rgbValues[1]}, ${rgbValues[2]}, ${alpha})`;
+}
+
 const AnnotationRect = memo(
   ({ annotation, isSelected, onSelect, onChange, ...props }: any) => {
     const shapeRef = useRef<any>(null);
@@ -71,12 +82,30 @@ const AnnotationRect = memo(
               ],
             });
           }}
+          onDragEnd={() => {
+            const node = shapeRef.current;
+            const scaleX = node.scaleX();
+            const scaleY = node.scaleY();
+
+            node.scaleX(1);
+            node.scaleY(1);
+
+            onChange({
+              ...annotation,
+              bbox: [
+                node.x(),
+                node.y(),
+                Math.abs(node.width() * scaleX),
+                Math.abs(node.height() * scaleY),
+              ],
+            });
+          }}
           stroke={color} // 边框颜色
           strokeWidth={isSelected ? 4 : 3} // 增加线宽
           dash={[]} // 移除虚线效果
           draggable={props.draggable}
-          fill={color} // 填充颜色
-          opacity={0.5} // 降低填充透明度
+          fill={convertToRGBA(color, 0.25)} // 填充颜色
+          opacity={0.7} // 降低填充透明度
           {...props}
         />
         {isSelected && (
@@ -130,6 +159,7 @@ const AnnotationCanvas = ({
   const toast = useToast();
   const labelPresets = useStore((state) => state.labelPresets);
   const setCurrentLabel = useStore((state) => state.setCurrentLabel);
+
   const loadingHeight = useRef<any>();
   useEffect(() => {
     setInternalSelectedId(null);

@@ -56,7 +56,8 @@ const UploadFolderModal = ({ isOpen, onClose, id }) => {
       return;
     }
     let promises: Promise<any>[] = [];
-    for (let i = 0; i < files.length; i++) {
+
+    for (let i = files.length - 1; i >= 0; i--) {
       let timeName = files[i].name.split(".")[0];
       let timeStr = "";
       let key = "";
@@ -68,7 +69,7 @@ const UploadFolderModal = ({ isOpen, onClose, id }) => {
         timeStr = timeName.split("T")[0];
         key = "T";
       }
-      for (let j = 0; j < files.length; j++) {
+      for (let j = files.length - 1; j >= 0; j--) {
         let timeName2 = files[j].name.split(".")[0];
         let timeStr2 = "";
         if (files[j].name !== files[i].name) {
@@ -82,12 +83,18 @@ const UploadFolderModal = ({ isOpen, onClose, id }) => {
 
         if (timeStr === timeStr2) {
           let formData = new FormData();
-          formData.append("projectId", id); // 替换为实际的 projectId
-          formData.append("visibleImage", files[i]); // 替换为实际的 visibleImage 文件
-          formData.append("infraredImage", files[j]); // 替换为实际的 infraredImage 文件
+          formData.append("projectId", id);
+          formData.append("visibleImage", key === "V" ? files[i] : files[j]);
+          formData.append("infraredImage", key === "V" ? files[j] : files[i]);
           formData.append("visibleImageName", files[i].name);
           formData.append("infraredImageName", files[j].name);
           promises.push(uploadImageGroups(formData));
+
+          // 删除 files[i] 和 files[j]
+          files.splice(j, 1);
+          files.splice(i, 1);
+          i--;
+          break;
         }
       }
     }

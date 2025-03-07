@@ -59,6 +59,7 @@ interface AppState {
   annotationHistory: HistoryItem[];
   maxHistoryLength: number;
   undoAnnotation: (setImagePair: Function) => void;
+  initAnnotationHistory: () => void;
   setCurrentselectedBoxId: (boxId) => void;
   currentselectedBoxId: string | null;
 }
@@ -160,6 +161,7 @@ export const useStore = create<AppState>((set, get) => ({
   //     };
   //   });
   // },
+  initAnnotationHistory: () => set({ annotationHistory: [] }),
   updateAnnotations: (imagePair) => {
     set((state: any) => {
       const newHistory = [imagePair, ...state.annotationHistory].slice(
@@ -199,8 +201,10 @@ export const useStore = create<AppState>((set, get) => ({
       if (state.annotationHistory.length === 0) return state;
 
       const [lastHistory, ...remainingHistory] = state.annotationHistory;
+      if (!(state.annotationHistory.length < 2)) {
+        setImagePair(remainingHistory[0]);
+      }
 
-      setImagePair(lastHistory);
       return {
         annotationHistory: remainingHistory,
       };

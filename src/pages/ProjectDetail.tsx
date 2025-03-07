@@ -115,7 +115,15 @@ const ProjectDetail = () => {
             </Button>
             <AutoAnnotateButton
               imageInfoArr={projectInfo?.imageGroups}
-              onAnnotationsChange={() => {}}
+              onAnnotationsChange={() => {
+                getProjectInfo({
+                  projectId: id,
+                }).then((res) => {
+                  if (res) {
+                    setProjectInfo(res);
+                  }
+                });
+              }}
               // onAnnotationsChange={(annotations, type) =>
               //   handleAnnotationChange(annotations, type)
               // }
