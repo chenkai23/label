@@ -41,7 +41,7 @@ const LabelPresets = () => {
   return (
     <Box>
       <HStack mb={4} justify="space-between">
-        <Text fontSize="sm" fontWeight="medium">
+        {/* <Text fontSize="sm" fontWeight="medium">
           预设标签
         </Text>
         <IconButton
@@ -50,10 +50,10 @@ const LabelPresets = () => {
           size="sm"
           variant="ghost"
           onClick={onOpen}
-        />
+        /> */}
       </HStack>
 
-      <VStack align="stretch" spacing={2}>
+      {/* <VStack align="stretch" spacing={2}>
         {presets.map((preset) => (
           <HStack
             key={preset.id}
@@ -92,7 +92,7 @@ const LabelPresets = () => {
             暂无预设标签
           </Text>
         )}
-      </VStack>
+      </VStack> */}
 
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />

@@ -10,12 +10,31 @@ import { FiPlus } from "react-icons/fi";
 import { useStore } from "../store";
 import ProjectCard from "../components/ProjectCard";
 import CreateProjectModal from "../components/CreateProjectModal";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { getAllProjects } from "../services/http";
 
 const Projects = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const projects = useStore((state) => state.projects);
+  const [projectList, setProjectList] = useState<any[]>([]);
 
+  // useEffect(() => {
+  //   if (!isOpen) {
+  //     getAllProjects().then((allProjects) => {
+  //       if (allProjects?.projects && allProjects.projects.length) {
+  //         setProjectList([...(allProjects.projects as [])]);
+  //       }
+  //     });
+  //   }
+  // }, [isOpen]);
+
+  useEffect(() => {
+    getAllProjects().then((allProjects) => {
+      if (allProjects?.projects && allProjects.projects.length) {
+        setProjectList([...(allProjects.projects as [])]);
+      }
+    });
+  }, []);
   return (
     <Container maxW="container.xl" py={8}>
       <VStack spacing={8} align="stretch">
@@ -34,7 +53,7 @@ const Projects = () => {
           </Text>
         ) : (
           <Grid templateColumns="repeat(auto-fill, minmax(300px, 1fr))" gap={6}>
-            {projects.map((project) => (
+            {projectList.map((project) => (
               <ProjectCard key={project.id} project={project} />
             ))}
           </Grid>

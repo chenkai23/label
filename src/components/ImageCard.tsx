@@ -10,18 +10,47 @@ import {
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { Image as ImageType } from "../types/project";
-import React from "react";
+import React, { useEffect } from "react";
+import { getImage } from "../services/http";
+import { byteToImage } from "../utils/common";
 
 interface ImageCardProps {
-  visibleImage: ImageType;
-  infraredImage: ImageType;
+  // visibleImage: ImageType;
+  // infraredImage: ImageType;
+  groupId: string;
+  visibleImageId: string;
+  infraredImageId: string;
+  visibleNum: number;
+  infraredNum: number;
+  visibleImageName: string;
 }
 
-const ImageCard = ({ visibleImage, infraredImage }: ImageCardProps) => {
+const ImageCard = ({
+  groupId,
+  visibleImageId,
+  infraredImageId,
+  visibleNum,
+  infraredNum,
+  visibleImageName,
+}: ImageCardProps) => {
   const { colorMode } = useColorMode();
+  const [visibleImage, setVisibleImage] = React.useState<any>(null);
+  const [infraredImage, setInfraredImage] = React.useState<any>(null);
+  useEffect(() => {
+    getImage({
+      id: visibleImageId,
+    }).then((res) => {
+      setVisibleImage(byteToImage(res.data));
+    });
+    getImage({
+      id: infraredImageId,
+    }).then((res) => {
+      setInfraredImage(byteToImage(res.data));
+    });
+  }, []);
 
   return (
-    <Link to={`/annotation/${visibleImage.id}`}>
+    <Link to={`/annotation/${groupId}`}>
       <Box
         borderRadius="lg"
         overflow="hidden"
@@ -36,8 +65,8 @@ const ImageCard = ({ visibleImage, infraredImage }: ImageCardProps) => {
         <Grid templateColumns="repeat(2, 1fr)" gap={2} p={2}>
           <Box>
             <Image
-              src={visibleImage.url}
-              alt={visibleImage.name}
+              src={visibleImage}
+              // alt={visibleImage.name}
               w="100%"
               h="150px"
               objectFit="cover"
@@ -49,8 +78,8 @@ const ImageCard = ({ visibleImage, infraredImage }: ImageCardProps) => {
           </Box>
           <Box>
             <Image
-              src={infraredImage.url}
-              alt={infraredImage.name}
+              src={infraredImage}
+              // alt={infraredImage}
               w="100%"
               h="150px"
               objectFit="cover"
@@ -64,15 +93,11 @@ const ImageCard = ({ visibleImage, infraredImage }: ImageCardProps) => {
         <Box p={3}>
           <VStack align="stretch" spacing={1}>
             <Text fontSize="sm" fontWeight="medium" noOfLines={1}>
-              {visibleImage.name}
+              {visibleImageName}
             </Text>
             <HStack>
-              <Badge colorScheme="blue">
-                {visibleImage.annotations.length} 个可见光标注
-              </Badge>
-              <Badge colorScheme="red">
-                {infraredImage.annotations.length} 个红外标注
-              </Badge>
+              <Badge colorScheme="blue">{visibleNum} 个可见光标注</Badge>
+              <Badge colorScheme="red">{infraredNum} 个红外标注</Badge>
             </HStack>
           </VStack>
         </Box>

@@ -14,8 +14,17 @@ import {
   AccordionIcon,
   Badge,
   Flex,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel,
+  Tag,
+  TagLabel,
+  TagRightIcon,
+  Stack,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { FiPlus, FiEdit2, FiTrash2 } from "react-icons/fi";
 import { Image, Annotation } from "../types/project";
 import AutoAnnotateButton from "./AutoAnnotateButton";
@@ -25,7 +34,7 @@ import AnnotationList from "./AnnotationList";
 import useStore from "../store";
 import { getLabelColor } from "../utils/colors";
 import React from "react";
-
+import { DeleteIcon } from "@chakra-ui/icons";
 interface LabelPanelProps {
   visibleImage: Image;
   infraredImage: Image;
@@ -46,8 +55,18 @@ const LabelPanel = ({
   onLabelChange,
 }: LabelPanelProps) => {
   const { colorMode } = useColorMode();
+  const currentselectedBoxId = useStore((state) => state.currentselectedBoxId);
   const [newLabel, setNewLabel] = useState("");
-
+  const currentLabel = useStore((state) => state.currentLabel);
+  const currentLabelinfo = useMemo(() => {
+    let allImagesInfo = visibleImage.annotations.concat(
+      infraredImage.annotations
+    );
+    let labelInfo = allImagesInfo.find(
+      (item) => item.id === currentselectedBoxId
+    );
+    return labelInfo;
+  }, [currentselectedBoxId]);
   const handleAddLabel = (label: string) => {
     if (!label.trim()) return;
 
@@ -64,10 +83,10 @@ const LabelPanel = ({
   return (
     <Box h="100%" display="flex" flexDirection="column">
       {/* 固定在顶部的部分 */}
-      <Box p={4} borderBottomWidth="1px">
-        <LabelPresets />
+      {/* <Box p={4} borderBottomWidth="1px"> */}
+      {/* <LabelPresets /> */}
 
-        <Box mt={4}>
+      {/* <Box mt={4}>
           <Text fontSize="lg" fontWeight="bold" mb={2}>
             标签管理
           </Text>
@@ -91,57 +110,160 @@ const LabelPanel = ({
               onClick={() => handleAddLabel(newLabel)}
             />
           </HStack>
-        </Box>
-      </Box>
+        </Box> */}
+      {/* </Box> */}
 
       {/* 可滚动的部分 */}
       <Box flex="1" overflowY="auto" p={4}>
         <Accordion allowMultiple defaultIndex={[0, 1]}>
-          {/* 可见光标注列表 */}
-          <AccordionItem border="none">
-            <AccordionButton>
-              <Box flex="1" textAlign="left">
-                <Text fontWeight="medium">可见光标注</Text>
-              </Box>
-              <Badge colorScheme="blue">
-                {visibleImage.annotations.length}
-              </Badge>
-              <AccordionIcon />
-            </AccordionButton>
-            <AccordionPanel>
-              <AnnotationList
-                annotations={visibleImage.annotations}
-                onSelect={(id) => onAnnotationSelect?.(id, "visible")}
-                onDelete={(id) => onAnnotationDelete?.(id, "visible")}
-                onLabelChange={(id, label) =>
-                  onLabelChange?.(id, label, "visible")
-                }
-              />
-            </AccordionPanel>
-          </AccordionItem>
+          <Tabs variant="enclosed">
+            <TabList>
+              <Tab>可见光标注</Tab>
+              <Tab>红外标注</Tab>
+            </TabList>
+            <TabPanels>
+              <TabPanel>
+                <Box flex="1" textAlign="left">
+                  <Text fontWeight="medium">标注列表</Text>
+                </Box>
+                <Box overflowY={"auto"} height={90} marginTop={2}>
+                  <Stack
+                    direction={["column", "row"]}
+                    spacing={2}
+                    flexWrap={"wrap"}
+                  >
+                    {visibleImage.annotations.map((annotation) => {
+                      return (
+                        <Tag
+                          cursor={"pointer"}
+                          size="md"
+                          variant="subtle"
+                          bg={colorMode === "dark" ? "gray.700" : "gray.50"}
+                          _hover={{
+                            bg: colorMode === "dark" ? "gray.600" : "gray.100",
+                          }}
+                          onClick={() =>
+                            onAnnotationSelect?.(annotation.id, "visible")
+                          }
+                          key={annotation.id}
+                        >
+                          <TagLabel>
+                            {annotation.label}&nbsp;
+                            {annotation.confidence
+                              ? `(置信度:
+                            ${annotation.confidence})`
+                              : ""}
+                          </TagLabel>
+                          <TagRightIcon
+                            cursor={"pointer"}
+                            boxSize="12px"
+                            as={DeleteIcon}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onAnnotationDelete?.(annotation.id, "visible");
+                            }}
+                          />
+                        </Tag>
+                      );
+                    })}
+                  </Stack>
+                </Box>
+                <Box flex="1" textAlign="left">
+                  <Text fontWeight="medium">标注信息</Text>
+                </Box>
+                <Box marginTop={2} height={120}>
+                  {currentLabelinfo ? (
+                    <VStack align="stretch" spacing={4}>
+                      <Tag size="sm">X: {currentLabelinfo?.bbox[0]}</Tag>
 
-          {/* 红外标注列表 */}
-          <AccordionItem border="none">
-            <AccordionButton>
-              <Box flex="1" textAlign="left">
-                <Text fontWeight="medium">红外标注</Text>
-              </Box>
-              <Badge colorScheme="red">
-                {infraredImage.annotations.length}
-              </Badge>
-              <AccordionIcon />
-            </AccordionButton>
-            <AccordionPanel>
-              <AnnotationList
-                annotations={infraredImage.annotations}
-                onSelect={(id) => onAnnotationSelect?.(id, "infrared")}
-                onDelete={(id) => onAnnotationDelete?.(id, "infrared")}
-                onLabelChange={(id, label) =>
-                  onLabelChange?.(id, label, "infrared")
-                }
-              />
-            </AccordionPanel>
-          </AccordionItem>
+                      <Tag size="sm">Y: {currentLabelinfo?.bbox[1]}</Tag>
+                      <Tag size="sm">W: {currentLabelinfo?.bbox[2]}</Tag>
+                      <Tag size="sm">H: {currentLabelinfo?.bbox[3]}</Tag>
+                    </VStack>
+                  ) : (
+                    <Text
+                      fontSize="sm"
+                      color="gray.500"
+                      textAlign="center"
+                      py={4}
+                    >
+                      请选择标注框
+                    </Text>
+                  )}
+                </Box>
+              </TabPanel>
+              <TabPanel>
+                <Box flex="1" textAlign="left">
+                  <Text fontWeight="medium">标注列表</Text>
+                </Box>
+                <Box overflowY={"auto"} height={90} marginTop={2}>
+                  <Stack
+                    direction={["column", "row"]}
+                    spacing={2}
+                    flexWrap={"wrap"}
+                  >
+                    {infraredImage.annotations.map((annotation) => {
+                      return (
+                        <Tag
+                          cursor={"pointer"}
+                          size="md"
+                          variant="subtle"
+                          bg={colorMode === "dark" ? "gray.700" : "gray.50"}
+                          _hover={{
+                            bg: colorMode === "dark" ? "gray.600" : "gray.100",
+                          }}
+                          onClick={() =>
+                            onAnnotationSelect?.(annotation.id, "infrared")
+                          }
+                          key={annotation.id}
+                        >
+                          <TagLabel>
+                            {annotation.label}&nbsp;
+                            {annotation.confidence
+                              ? `(置信度:
+                            ${annotation.confidence})`
+                              : ""}
+                          </TagLabel>
+                          <TagRightIcon
+                            cursor={"pointer"}
+                            boxSize="12px"
+                            as={DeleteIcon}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onAnnotationDelete?.(annotation.id, "infrared");
+                            }}
+                          />
+                        </Tag>
+                      );
+                    })}
+                  </Stack>
+                </Box>
+                <Box flex="1" textAlign="left">
+                  <Text fontWeight="medium">标注信息</Text>
+                </Box>
+                <Box marginTop={2} height={120}>
+                  {currentLabelinfo ? (
+                    <VStack align="stretch" spacing={4}>
+                      <Tag size="sm">X: {currentLabelinfo?.bbox[0]}</Tag>
+
+                      <Tag size="sm">Y: {currentLabelinfo?.bbox[1]}</Tag>
+                      <Tag size="sm">W: {currentLabelinfo?.bbox[2]}</Tag>
+                      <Tag size="sm">H: {currentLabelinfo?.bbox[3]}</Tag>
+                    </VStack>
+                  ) : (
+                    <Text
+                      fontSize="sm"
+                      color="gray.500"
+                      textAlign="center"
+                      py={4}
+                    >
+                      请选择标注框
+                    </Text>
+                  )}
+                </Box>
+              </TabPanel>
+            </TabPanels>
+          </Tabs>
         </Accordion>
 
         <AnnotationStats

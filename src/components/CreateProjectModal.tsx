@@ -18,6 +18,8 @@ import { useState } from "react";
 import { useStore } from "../store";
 import { Project } from "../types/project";
 import React from "react";
+import { createProject } from "../services/http";
+import { RandomColor } from "../utils/common";
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -26,6 +28,7 @@ interface CreateProjectModalProps {
 
 const CreateProjectModal = ({ isOpen, onClose }: CreateProjectModalProps) => {
   const [name, setName] = useState("");
+  const [label, setLabel] = useState("");
   const [description, setDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const addProject = useStore((state) => state.addProject);
@@ -54,11 +57,35 @@ const CreateProjectModal = ({ isOpen, onClose }: CreateProjectModalProps) => {
       };
 
       addProject(newProject);
-      toast({
-        title: "项目创建成功",
-        status: "success",
-        duration: 2000,
+      let labelArr = label.trim().split("-");
+      let rgbColor = new RandomColor(labelArr.length).rgbArray;
+      let tagArr = labelArr.map((tag, index) => {
+        return {
+          name: tag,
+          color: rgbColor[index].color,
+        };
       });
+      createProject({
+        name: name.trim(),
+        tags: tagArr,
+        description: description.trim(),
+      })
+        .then((res) => {
+          toast({
+            title: "项目创建成功",
+            status: "success",
+            duration: 2000,
+          });
+        })
+        .catch((err) => {
+          toast({
+            title: "创建失败",
+            description: "请稍后重试",
+            status: "error",
+            duration: 2000,
+          });
+        });
+
       onClose();
       setName("");
       setDescription("");
@@ -88,6 +115,14 @@ const CreateProjectModal = ({ isOpen, onClose }: CreateProjectModalProps) => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="输入项目名称"
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel>预设标签</FormLabel>
+              <Input
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                placeholder="输入预设标签，使用'-'分割，如'people-test-wall'"
               />
             </FormControl>
             <FormControl>

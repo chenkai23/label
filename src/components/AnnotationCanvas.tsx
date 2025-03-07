@@ -12,6 +12,8 @@ import { memo } from "react";
 import { useStore } from "../store/index";
 import { getLabelColor } from "../utils/colors";
 import React from "react";
+import { getImage } from "../services/http";
+import { byteToImage } from "../utils/common";
 
 interface AnnotationCanvasProps {
   image: ImageType;
@@ -117,7 +119,8 @@ const AnnotationCanvas = ({
   const setInternalSelectedId = useStore(
     (state) => state.setCurrentselectedBoxId
   );
-  const selectedId = externalSelectedId ?? internalSelectedId;
+  // const selectedId = externalSelectedId ?? internalSelectedId;
+  const selectedId = internalSelectedId;
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const { colorMode } = useColorMode();
@@ -125,15 +128,31 @@ const AnnotationCanvas = ({
   const toast = useToast();
   const labelPresets = useStore((state) => state.labelPresets);
   const setCurrentLabel = useStore((state) => state.setCurrentLabel);
-
+  const loadingHeight = useRef<any>();
   // 加载图片
   useEffect(() => {
     if (!image?.url) return;
+    getImage({
+      id: image.id,
+    }).then((res) => {
+      const blob = new Blob([res.data], { type: "image/jpeg" }); // 根据实际情况调整 MIME 类型
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        // 创建 Image 对象
+        const img: any = new Image();
+        img.crossOrigin = "anonymous";
+        // 将 dataURL 赋值给 Image 对象的 src 属性
+        img.src = event.target!.result;
 
-    const img = new window.Image();
-    img.crossOrigin = "anonymous";
-    img.src = image.url;
-    img.onload = () => setImageObj(img);
+        // 图片加载完成后传递给 Konva.Image
+        img.onload = function () {
+          setImageObj(img);
+        };
+      };
+      if (blob) {
+        reader.readAsDataURL(blob);
+      }
+    });
   }, [image?.url]);
 
   // 同步标注数据
@@ -412,6 +431,7 @@ const AnnotationCanvas = ({
         display="flex"
         alignItems="center"
         justifyContent="center"
+        ref={loadingHeight}
       >
         <Text>无图片数据</Text>
       </Box>
@@ -426,6 +446,7 @@ const AnnotationCanvas = ({
         display="flex"
         alignItems="center"
         justifyContent="center"
+        ref={loadingHeight}
       >
         <Text>图片加载中...</Text>
       </Box>
@@ -440,7 +461,7 @@ const AnnotationCanvas = ({
       <Stage
         ref={stageRef}
         width={dimensions.width}
-        height={dimensions.height}
+        height={dimensions.height - 150}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
