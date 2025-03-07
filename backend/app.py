@@ -1,33 +1,38 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from utils.detector import Detector
 import os
+import sys
 
-app = Flask(__name__)
-CORS(app)
+# 添加项目根目录到 Python 路径
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# 初始化检测器
-model_path = os.path.join('models', 'yolov8n.pt')
-detector = Detector(model_path)
+from flask import Flask
+from flask_cors import CORS
+from api.project_api import project_bp
+from api.image_api import image_bp
+from api.annotation_api import annotation_bp
 
-@app.route('/api/auto-annotate', methods=['POST'])
-def auto_annotate():
-    try:
-        data = request.json
-        image_url = data.get('imageUrl')
-        
-        if not image_url:
-            return jsonify({'error': 'No image URL provided'}), 400
-            
-        # 执行检测
-        annotations = detector.detect(image_url)
-        
-        return jsonify({
-            'annotations': annotations
-        })
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+def create_app():
+    app = Flask(__name__)
+    
+    # 配置CORS，允许所有来源访问
+    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+
+    # 注册蓝图
+    app.register_blueprint(project_bp)
+    app.register_blueprint(image_bp)
+    app.register_blueprint(annotation_bp)
+    
+    return app
+
+app = create_app()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5050, debug=True) 
+    # 通过环境变量控制是否启用热重载
+    use_reloader = os.getenv('FLASK_USE_RELOADER', 'false').lower() == 'true'
+    
+    # 设置主机为0.0.0.0，允许外部访问
+    app.run(
+        host='0.0.0.0', 
+        port=5050, 
+        debug=True,
+        use_reloader=use_reloader
+    )
