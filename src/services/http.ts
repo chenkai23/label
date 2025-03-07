@@ -29,6 +29,14 @@ export const getImage = (params: any) => {
     responseType: "arraybuffer", // blob流处理
   });
 };
+export const exportAnnotations = (params: any) => {
+  return request({
+    url: "/exportAnnotations",
+    method: "get",
+    params,
+    responseType: "arraybuffer", // blob流处理
+  });
+};
 
 export const getAllProjects = async () => {
   const response = await http.get(`/getAllProjects`);
@@ -47,5 +55,9 @@ export const manualAnnotations = async (data) => {
 
 export const autoAnnotate = async (data) => {
   const response = await http.post(`/autoAnnotate`, data);
+  return response.data;
+};
+export const deleteProject = async (data) => {
+  const response = await http.get(`/deleteProject`, data);
   return response.data;
 };

@@ -93,3 +93,26 @@ export function byteToImage(data: any) {
   blobUrl = (window.URL || window.webkitURL).createObjectURL(blob);
   return blobUrl;
 }
+
+export function downloadFile(
+  params: any,
+  callback: Function,
+  downloadFileName: string,
+  fileType: string = "zip"
+) {
+  return callback(params).then((response: any) => {
+    let binaryData: any[] = [];
+    binaryData.push(response.data);
+    let blob = new Blob(binaryData, {
+      type: `application/${fileType}`, //word文档为msword,pdf文档为pdf
+    });
+    let objectUrl = URL.createObjectURL(blob);
+    let link = document.createElement("a");
+    link.href = objectUrl;
+    link.setAttribute("download", downloadFileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link); //下载完成移除元素
+    URL.revokeObjectURL(objectUrl); //释放掉blob对象
+  });
+}

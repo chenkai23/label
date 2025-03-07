@@ -5,16 +5,19 @@ import {
   Badge,
   useColorMode,
   HStack,
+  IconButton,
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { Project } from "../types/project";
 import React from "react";
-
+import { CloseIcon } from "@chakra-ui/icons";
+import { deleteProject } from "../services/http";
 interface ProjectCardProps {
   project: Project;
+  deleteFunc?: Function;
 }
 
-const ProjectCard = ({ project }: ProjectCardProps) => {
+const ProjectCard = ({ project, deleteFunc }: ProjectCardProps) => {
   const { colorMode } = useColorMode();
 
   return (
@@ -29,7 +32,27 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
           boxShadow: "md",
         }}
         transition="all 0.2s"
+        position={"relative"}
       >
+        <IconButton
+          isRound={true}
+          variant="outline"
+          colorScheme="teal"
+          aria-label="Done"
+          fontSize="20px"
+          icon={<CloseIcon w={"10px"} />}
+          position={"absolute"}
+          top={0}
+          right={0}
+          size={"sm"}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (deleteFunc) {
+              deleteFunc(e);
+            }
+          }}
+        />
         <VStack align="stretch" spacing={2}>
           <Text fontSize="lg" fontWeight="bold" noOfLines={1}>
             {project.name}

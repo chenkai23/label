@@ -19,8 +19,9 @@ import UploadModal from "../components/UploadModal";
 import { useCallback, useEffect, useState } from "react";
 import React from "react";
 import UploadFolderModal from "../components/UploadFolderModal";
-import { getProjectInfo } from "../services/http";
+import { exportAnnotations, getProjectInfo } from "../services/http";
 import AutoAnnotateButton from "../components/AutoAnnotateButton";
+import { downloadFile } from "../utils/common";
 
 const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -67,22 +68,41 @@ const ProjectDetail = () => {
 
   const handleExport = async () => {
     setIsExporting(true);
-    try {
-      toast({
-        title: "导出成功",
-        status: "success",
-        duration: 2000,
+    // try {
+    //   toast({
+    //     title: "导出成功",
+    //     status: "success",
+    //     duration: 2000,
+    //   });
+    // } catch (error) {
+    //   toast({
+    //     title: "导出失败",
+    //     description: "请稍后重试",
+    //     status: "error",
+    //     duration: 2000,
+    //   });
+    // } finally {
+    //   setIsExporting(false);
+    // }
+    downloadFile({ projectId: id }, exportAnnotations, "导出文件", "zip")
+      .then((res) => {
+        toast({
+          title: "导出成功",
+          status: "success",
+          duration: 2000,
+        });
+      })
+      .catch((err) => {
+        toast({
+          title: "导出失败",
+          description: "请稍后重试",
+          status: "error",
+          duration: 2000,
+        });
+      })
+      .finally(() => {
+        setIsExporting(false);
       });
-    } catch (error) {
-      toast({
-        title: "导出失败",
-        description: "请稍后重试",
-        status: "error",
-        duration: 2000,
-      });
-    } finally {
-      setIsExporting(false);
-    }
   };
 
   return (
