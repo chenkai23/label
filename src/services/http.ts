@@ -7,7 +7,13 @@ export const createProject = async (data) => {
 };
 
 export const uploadImageGroups = async (data) => {
-  const response = await http.post("/uploadImageGroups", data);
+  // 使用FormData上传文件时，不要设置Content-Type，让浏览器自动设置
+  const config = {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  };
+  const response = await http.post("/uploadImageGroups", data, null, null, config);
   return response.data;
 };
 

@@ -88,17 +88,20 @@ const ImageCard = ({
           }}
           transition="all 0.2s"
           position="relative"
+          role="group"
         >
           <IconButton
             aria-label="删除图片组"
             icon={<FiTrash2 />}
             size="sm"
             colorScheme="red"
-            variant="ghost"
+            variant="solid"
             position="absolute"
             top={2}
             right={2}
             zIndex={2}
+            opacity={0}
+            _groupHover={{ opacity: 1 }}
             onClick={handleDeleteClick}
           />
           <Grid templateColumns="repeat(2, 1fr)" gap={2} p={2}>

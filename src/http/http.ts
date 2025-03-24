@@ -21,7 +21,7 @@ const http = {
       .catch((error) => {});
   },
   // data为body体内的请求值，params为post请求链接后以?xxx=xxx形式增添的请求值
-  post(url: string, data: any, params?: any, controller?: any) {
+  post(url: string, data: any, params?: any, controller?: any, extraConfig?: any) {
     const config: any = {
       method: "post",
       url: url,
@@ -32,6 +32,10 @@ const http = {
     }
     if (params) {
       config.params = params;
+    }
+    // 合并额外的配置
+    if (extraConfig) {
+      Object.assign(config, extraConfig);
     }
     return request(config)
       .then((res: any) => {

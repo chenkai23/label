@@ -22,14 +22,16 @@ import { useDropzone } from "react-dropzone";
 import { useStore } from "../store";
 import { ImagePair } from "../types/project";
 import React from "react";
+import { uploadImageGroups } from "../services/http";
 
 interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   projectId: string;
+  onSuccess?: () => void;
 }
 
-const UploadModal = ({ isOpen, onClose, projectId }: UploadModalProps) => {
+const UploadModal = ({ isOpen, onClose, projectId, onSuccess }: UploadModalProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [visibleImage, setVisibleImage] = useState<File | null>(null);
   const [infraredImage, setInfraredImage] = useState<File | null>(null);
@@ -76,34 +78,26 @@ const UploadModal = ({ isOpen, onClose, projectId }: UploadModalProps) => {
 
     setIsUploading(true);
     try {
-      const pairId = Date.now().toString();
-      const imagePair: ImagePair = {
-        id: pairId,
-        projectId,
-        visibleImage: {
-          id: `${pairId}_visible`,
-          name: visibleImage.name,
-          url: URL.createObjectURL(visibleImage),
-          type: "visible",
-          annotations: [],
-        },
-        infraredImage: {
-          id: `${pairId}_infrared`,
-          name: infraredImage.name,
-          url: URL.createObjectURL(infraredImage),
-          type: "infrared",
-          annotations: [],
-        },
-      };
-
-      addImagePair(projectId, imagePair);
+      const formData = new FormData();
+      formData.append('projectId', projectId);
+      formData.append('visibleImage', visibleImage);
+      formData.append('infraredImage', infraredImage);
+      
+      const response = await uploadImageGroups(formData);
+      
       toast({
         title: "上传成功",
         status: "success",
         duration: 2000,
       });
+      
+      if (onSuccess) {
+        onSuccess();
+      }
+      
       onClose();
     } catch (error) {
+      console.error('上传失败:', error);
       toast({
         title: "上传失败",
         description: "请稍后重试",

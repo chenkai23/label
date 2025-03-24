@@ -139,6 +139,11 @@ const ProjectDetail = () => {
     }
   };
 
+  const handleUploadModalClose = useCallback(() => {
+    onUploadModalClose();
+    refreshProjectInfo();
+  }, [onUploadModalClose, refreshProjectInfo]);
+
   return (
     <Container maxW="container.xl" py={8}>
       <VStack spacing={8} align="stretch">
@@ -234,8 +239,9 @@ const ProjectDetail = () => {
 
       <UploadModal
         isOpen={isUploadModalOpen}
-        onClose={onUploadModalClose}
+        onClose={handleUploadModalClose}
         projectId={projectInfo?.id}
+        onSuccess={refreshProjectInfo}
       />
       <UploadFolderModal
         id={id}
