@@ -61,3 +61,8 @@ export const deleteProject = async (data) => {
   const response = await http.get(`/deleteProject`, data);
   return response.data;
 };
+
+export const deleteImageGroup = async (data) => {
+  const response = await http.get(`/deleteImageGroup`, data);
+  return response.data;
+};

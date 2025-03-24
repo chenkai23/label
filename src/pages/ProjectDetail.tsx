@@ -19,7 +19,7 @@ import UploadModal from "../components/UploadModal";
 import { useCallback, useEffect, useState } from "react";
 import React from "react";
 import UploadFolderModal from "../components/UploadFolderModal";
-import { exportAnnotations, getProjectInfo } from "../services/http";
+import { exportAnnotations, getProjectInfo, deleteImageGroup } from "../services/http";
 import AutoAnnotateButton from "../components/AutoAnnotateButton";
 import { downloadFile } from "../utils/common";
 
@@ -41,7 +41,8 @@ const ProjectDetail = () => {
   const [isExporting, setIsExporting] = useState(false);
   const toast = useToast();
 
-  useEffect(() => {
+  const refreshProjectInfo = useCallback(() => {
+    if (!id) return;
     getProjectInfo({
       projectId: id,
     }).then((res) => {
@@ -49,7 +50,11 @@ const ProjectDetail = () => {
         setProjectInfo(res);
       }
     });
-  }, []);
+  }, [id]);
+
+  useEffect(() => {
+    refreshProjectInfo();
+  }, [refreshProjectInfo]);
 
   // if (!project) {
   //   return <Container>项目不存在</Container>;
@@ -103,6 +108,35 @@ const ProjectDetail = () => {
       .finally(() => {
         setIsExporting(false);
       });
+  };
+
+  const handleImageGroupDelete = async (groupId: string) => {
+    try {
+      const result = await deleteImageGroup({ groupId });
+      if (result.status === 'success') {
+        toast({
+          title: '删除成功',
+          status: 'success',
+          duration: 2000,
+        });
+        // 刷新项目信息，更新图片组列表
+        refreshProjectInfo();
+      } else {
+        toast({
+          title: '删除失败',
+          description: '请稍后重试',
+          status: 'error',
+          duration: 2000,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: '删除失败',
+        description: '请稍后重试',
+        status: 'error',
+        duration: 2000,
+      });
+    }
   };
 
   return (
@@ -171,6 +205,7 @@ const ProjectDetail = () => {
                 visibleNum={pair.visibleNum}
                 infraredNum={pair.infraredNum}
                 visibleImageName={pair.visibleImageName}
+                onDelete={() => handleImageGroupDelete(pair.id)}
               />
             ))}
           </Grid>

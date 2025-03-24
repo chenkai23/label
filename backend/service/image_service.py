@@ -74,4 +74,17 @@ class ImageService:
         image_group = self.image_repository.get_by_id(group_id_int)
         if not image_group:
             raise ValueError("Image group not found")
-        return image_group 
+        return image_group
+
+    def delete_image_group(self, group_id: str) -> bool:
+        """
+        删除图片组
+        """
+        try:
+            group_id_int = int(group_id)
+            return self.image_repository.delete(group_id_int)
+        except ValueError:
+            raise ValueError("Invalid group_id")
+        except Exception as e:
+            print(f"Error deleting image group: {str(e)}")
+            raise 

@@ -111,4 +111,23 @@ def get_image():
         return send_file(image_path, mimetype='image/jpeg')
         
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@image_bp.route('/api/deleteImageGroup', methods=['GET'])
+def delete_image_group():
+    try:
+        group_id = request.args.get('groupId')
+        if not group_id:
+            return jsonify({'error': 'Missing groupId parameter'}), 400
+            
+        success = image_service.delete_image_group(group_id)
+        
+        if success:
+            return jsonify({'status': 'success'})
+        else:
+            return jsonify({'error': 'Failed to delete image group'}), 500
+            
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
         return jsonify({'error': str(e)}), 500 
