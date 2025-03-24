@@ -132,7 +132,9 @@ class ProjectRepository:
             cursor.execute("""
                 SELECT ig.id, 
                        ig.visible_image_path, 
-                       ig.infrared_image_path
+                       ig.infrared_image_path,
+                       ig.visible_original_name,
+                       ig.infrared_original_name
                 FROM image_groups ig
                 WHERE ig.project_id = %s
                 ORDER BY ig.created_at DESC
@@ -156,6 +158,44 @@ class ProjectRepository:
                 group_id = group['id']
                 visible_image_name = os.path.basename(group['visible_image_path'])
                 infrared_image_name = os.path.basename(group['infrared_image_path'])
+                
+                # 获取原始文件名，如果存在的话
+                visible_original_name = group.get('visible_original_name', visible_image_name)
+                infrared_original_name = group.get('infrared_original_name', infrared_image_name)
+                
+                # 确保使用的是纯文件名，不包含路径部分
+                visible_original_name = os.path.basename(visible_original_name)
+                infrared_original_name = os.path.basename(infrared_original_name)
+                
+                # 提取共同文件名部分 (例如 "DJI_20240928095901_0022" 从 "DJI_20240928095901_0022_V.JPG")
+                common_name = ""
+                if visible_original_name and infrared_original_name:
+                    # 尝试找到_V或_T前的部分
+                    for suffix in ['_V', '_T', '_v', '_t']:
+                        if suffix in visible_original_name:
+                            common_name = visible_original_name.split(suffix)[0]
+                            break
+                    
+                    # 如果没找到特定后缀，使用通用方法尝试寻找共同部分
+                    if not common_name:
+                        # 移除扩展名
+                        visible_base = os.path.splitext(visible_original_name)[0]
+                        infrared_base = os.path.splitext(infrared_original_name)[0]
+                        
+                        # 找出最长的共同前缀
+                        common_length = 0
+                        for i in range(min(len(visible_base), len(infrared_base))):
+                            if visible_base[i] == infrared_base[i]:
+                                common_length += 1
+                            else:
+                                break
+                        
+                        if common_length > 0:
+                            common_name = visible_base[:common_length]
+                
+                # 如果找不到共同名称，使用可见光图像的原始名称
+                if not common_name:
+                    common_name = visible_original_name
                 
                 # 获取自动标注数量
                 cursor.execute("""
@@ -201,7 +241,8 @@ class ProjectRepository:
                     'visibleImageId': visible_image_name,
                     'infraredImageId': infrared_image_name,
                     'visibleNum': visible_num,
-                    'infraredNum': infrared_num
+                    'infraredNum': infrared_num,
+                    'originalName': common_name
                 })
             
             return result

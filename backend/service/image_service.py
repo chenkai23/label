@@ -17,6 +17,10 @@ class ImageService:
     ) -> ImageGroup:
         group_id = str(uuid.uuid4())
         
+        # 保存原始文件名（只保存文件名，不包含路径）
+        visible_original_name = os.path.basename(visible_image.filename)
+        infrared_original_name = os.path.basename(infrared_image.filename)
+        
         # 创建项目专属目录
         project_dir = os.path.join(UPLOAD_FOLDER, project_id)
         os.makedirs(project_dir, exist_ok=True)
@@ -34,6 +38,8 @@ class ImageService:
             project_id=project_id,
             visible_image_path=visible_path,
             infrared_image_path=infrared_path,
+            visible_original_name=visible_original_name,
+            infrared_original_name=infrared_original_name,
             created_at=None,
             updated_at=None
         )

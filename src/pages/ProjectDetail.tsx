@@ -210,6 +210,7 @@ const ProjectDetail = () => {
                 visibleNum={pair.visibleNum}
                 infraredNum={pair.infraredNum}
                 visibleImageName={pair.visibleImageName}
+                originalName={pair.originalName}
                 onDelete={() => handleImageGroupDelete(pair.id)}
               />
             ))}

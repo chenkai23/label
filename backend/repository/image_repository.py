@@ -11,12 +11,15 @@ class ImageRepository:
         try:
             cursor.execute(
                 """INSERT INTO image_groups 
-                (project_id, visible_image_path, infrared_image_path) 
-                VALUES (%s, %s, %s)""",
+                (project_id, visible_image_path, infrared_image_path, 
+                visible_original_name, infrared_original_name) 
+                VALUES (%s, %s, %s, %s, %s)""",
                 (
                     image_group.project_id,
                     image_group.visible_image_path,
-                    image_group.infrared_image_path
+                    image_group.infrared_image_path,
+                    image_group.visible_original_name,
+                    image_group.infrared_original_name
                 )
             )
             group_id = cursor.lastrowid  # 获取自增ID
@@ -65,7 +68,9 @@ class ImageRepository:
             visible_image_path=row['visible_image_path'],
             infrared_image_path=row['infrared_image_path'],
             created_at=row['created_at'],
-            updated_at=row['updated_at']
+            updated_at=row['updated_at'],
+            visible_original_name=row.get('visible_original_name'),
+            infrared_original_name=row.get('infrared_original_name')
         )
 
     def update(self, image_group: ImageGroup) -> ImageGroup:

@@ -18,6 +18,14 @@ import { byteToImage } from "../utils/common";
 import { FiTrash2 } from "react-icons/fi";
 import { Alert } from "./Alert";
 
+// 辅助函数：确保只显示文件名，不包含路径
+const getFileName = (path: string): string => {
+  if (!path) return '';
+  // 使用正则表达式或split提取文件名
+  const parts = path.split('/');
+  return parts[parts.length - 1];
+};
+
 interface ImageCardProps {
   // visibleImage: ImageType;
   // infraredImage: ImageType;
@@ -27,6 +35,7 @@ interface ImageCardProps {
   visibleNum: number;
   infraredNum: number;
   visibleImageName: string;
+  originalName?: string;
   onDelete?: () => void;
 }
 
@@ -37,6 +46,7 @@ const ImageCard = ({
   visibleNum,
   infraredNum,
   visibleImageName,
+  originalName,
   onDelete
 }: ImageCardProps) => {
   const { colorMode } = useColorMode();
@@ -135,7 +145,7 @@ const ImageCard = ({
           <Box p={3}>
             <VStack align="stretch" spacing={1}>
               <Text fontSize="sm" fontWeight="medium" noOfLines={1}>
-                {visibleImageName}
+                {originalName ? getFileName(originalName) : getFileName(visibleImageName)}
               </Text>
               <HStack>
                 <Badge colorScheme="blue">{visibleNum} 个可见光标注</Badge>

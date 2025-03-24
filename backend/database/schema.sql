@@ -20,6 +20,8 @@ CREATE TABLE image_groups (
     project_id BIGINT,
     visible_image_path VARCHAR(255),
     infrared_image_path VARCHAR(255),
+    visible_original_name VARCHAR(255),
+    infrared_original_name VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
