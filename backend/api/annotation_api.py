@@ -9,19 +9,28 @@ annotation_service = AnnotationService()
 def auto_annotate():
     try:
         data = request.json
-        group_id = data.get('groupId')
         project_id = data.get('projectId')
+        group_id = data.get('groupId')
+        conf = float(data.get('conf', 0.5))  # 默认值0.5
+        iou = float(data.get('iou', 0.5))    # 默认值0.5
         
-        if not group_id or not project_id:
-            return jsonify({'error': 'Missing groupId or projectId'}), 400
+        print(f"Received auto annotation request - project_id: {project_id}, group_id: {group_id}, conf: {conf}, iou: {iou}")
+        
+        if not project_id or not group_id:
+            return jsonify({'error': 'Missing projectId or groupId'}), 400
             
-        yolo_data = annotation_service.auto_annotate(group_id, project_id)
+        # 执行自动标注
+        annotations = annotation_service.auto_annotate(
+            group_id=group_id,
+            project_id=project_id,
+            conf=conf,
+            iou=iou
+        )
         
-        return jsonify({
-            'annotations': yolo_data
-        })
+        return jsonify(annotations)
         
     except Exception as e:
+        print(f"Error in auto annotation API: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @annotation_bp.route('/api/manualAnnotations', methods=['POST'])

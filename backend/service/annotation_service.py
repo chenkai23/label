@@ -11,16 +11,21 @@ import numpy as np
 
 class AnnotationService:
     def __init__(self):
-        model_path = os.path.join('models', 'best.pt')
-        self.detector = Detector(model_path)
+        self.detector = Detector()
         self.image_repository = ImageRepository()
         self.annotation_repository = AnnotationRepository()
         
-    def auto_annotate(self, group_id: str, project_id: str) -> dict:
+    def auto_annotate(self, group_id: str, project_id: str, conf: float = 0.5, iou: float = 0.5) -> dict:
         """
-        对图片组进行自动标注，如果已经检测过则跳过
+        对图片组进行自动标注
+        Args:
+            group_id: 图片组ID
+            project_id: 项目ID
+            conf: 置信度阈值
+            iou: NMS IOU阈值
         """
         try:
+            print(f"Starting auto annotation for group {group_id} with conf={conf}, iou={iou}")
             # 转换ID为整数
             group_id_int = int(group_id)
             project_id_int = int(project_id)
@@ -30,15 +35,12 @@ class AnnotationService:
             if not image_group or image_group.project_id != project_id_int:
                 raise ValueError("Image group not found")
             
-            # 检查是否已经有检测结果
-            existing_annotations = self.annotation_repository.get_annotations(group_id_int)
-            if existing_annotations:
-                print(f"Group {group_id} already has annotations, skipping detection")
-                return existing_annotations
+            # 只删除自动标注结果，保留手动标注
+            self.annotation_repository.delete_auto_annotations(group_id_int)
             
             # 执行YOLO检测
-            visible_results = self.detector.detect(image_group.visible_image_path, 'visible')
-            infrared_results = self.detector.detect(image_group.infrared_image_path, 'infrared')
+            visible_results = self.detector.detect(image_group.visible_image_path, 'visible', conf, iou)
+            infrared_results = self.detector.detect(image_group.infrared_image_path, 'infrared', conf, iou)
             
             # 转换检测结果格式
             visible_annotations = self._format_yolo_results(visible_results, 'visible')

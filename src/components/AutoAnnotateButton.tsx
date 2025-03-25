@@ -1,26 +1,30 @@
 import {
   Button,
-  useToast,
-  Tooltip,
   Menu,
   MenuButton,
   MenuList,
   MenuItem,
+  Tooltip,
+  useToast,
+  VStack,
+  HStack,
+  NumberInput,
+  NumberInputField,
+  NumberInputStepper,
+  NumberIncrementStepper,
+  NumberDecrementStepper,
+  Text,
 } from "@chakra-ui/react";
+import { FiCpu } from "react-icons/fi";
 import { useState } from "react";
-import { FiCpu, FiChevronDown } from "react-icons/fi";
-import { Image, Annotation } from "../types/project";
-import React from "react";
-import { autoAnnotate, getImage } from "../services/http";
-import { byteToImage } from "../utils/common";
 import { useParams } from "react-router-dom";
+import { autoAnnotate } from "../services/http";
 
 interface AutoAnnotateButtonProps {
-  // visibleImageArr: Image[];
-  // infraredImageArr: Image[];
   imageInfoArr: {
     id: number;
     infraredImageId: string;
+    infraredImageName: string;
     infraredNum: number;
     visibleImageId: string;
     visibleImageName: string;
@@ -34,25 +38,10 @@ const AutoAnnotateButton = ({
   onAnnotationsChange,
 }: AutoAnnotateButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [conf, setConf] = useState(0.5);
+  const [iou, setIou] = useState(0.5);
   const toast = useToast();
   const { id } = useParams<{ id: string }>();
-  const getImageData = async (url: string) => {
-    // 如果是 Blob URL，先获取 Blob 数据
-    if (url.startsWith("blob:")) {
-      const response = await fetch(url);
-      const blob = await response.blob();
-
-      // 将 Blob 转换为 base64
-      return new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(blob);
-      });
-    }
-
-    // 如果是普通 URL，直接返回
-    return url;
-  };
 
   const handleAutoAnnotate = async () => {
     setIsLoading(true);
@@ -69,6 +58,8 @@ const AutoAnnotateButton = ({
           autoAnnotate({
             groupId: image.id,
             projectId: id,
+            conf,
+            iou,
           })
         );
       });
@@ -106,20 +97,66 @@ const AutoAnnotateButton = ({
 
   return (
     <Menu>
-      <Tooltip label="使用 AI 自动标注" placement="right">
-        <Button
-          w={20}
-          leftIcon={<FiCpu />}
-          isLoading={isLoading}
-          loadingText="正在标注"
-          variant="outline"
-          size="sm"
-          colorScheme="brand"
-          onClick={() => handleAutoAnnotate()}
-        >
-          AI
-        </Button>
-      </Tooltip>
+      <MenuButton
+        as={Button}
+        w={20}
+        leftIcon={<FiCpu />}
+        isLoading={isLoading}
+        loadingText="正在标注"
+        variant="outline"
+        size="sm"
+        colorScheme="brand"
+      >
+        AI
+      </MenuButton>
+      <MenuList p={4}>
+        <VStack spacing={4} align="stretch">
+          <HStack justify="space-between">
+            <Text>置信度阈值</Text>
+            <NumberInput
+              size="sm"
+              min={0}
+              max={1}
+              step={0.1}
+              value={conf}
+              onChange={(_, value) => setConf(value)}
+              w="120px"
+            >
+              <NumberInputField />
+              <NumberInputStepper>
+                <NumberIncrementStepper />
+                <NumberDecrementStepper />
+              </NumberInputStepper>
+            </NumberInput>
+          </HStack>
+          <HStack justify="space-between">
+            <Text>IOU阈值</Text>
+            <NumberInput
+              size="sm"
+              min={0}
+              max={1}
+              step={0.1}
+              value={iou}
+              onChange={(_, value) => setIou(value)}
+              w="120px"
+            >
+              <NumberInputField />
+              <NumberInputStepper>
+                <NumberIncrementStepper />
+                <NumberDecrementStepper />
+              </NumberInputStepper>
+            </NumberInput>
+          </HStack>
+          <Button
+            colorScheme="brand"
+            onClick={handleAutoAnnotate}
+            isLoading={isLoading}
+            loadingText="正在标注"
+          >
+            开始标注
+          </Button>
+        </VStack>
+      </MenuList>
     </Menu>
   );
 };

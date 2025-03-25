@@ -10,45 +10,41 @@ import io
 class Detector:
     _instance = None
     
-    def __new__(cls, model_path: str = None):
+    def __new__(cls):
         if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
+            cls._instance = super(Detector, cls).__new__(cls)
         return cls._instance
     
-    def __init__(self, model_path: str = None):
-        if self._initialized:
-            return
-            
-        if model_path is None:
+    def __init__(self):
+        if not hasattr(self, 'initialized'):
+            from ultralytics import YOLO
             model_path = os.path.join('models', 'best.pt')
-            
-        self.model = YOLO(model_path)
-        # 定义 COCO 数据集的类别名称
-        # self.names = {
-        #     0: 'person', 1: 'bicycle', 2: 'car', 3: 'motorcycle', 4: 'airplane',
-        #     5: 'bus', 6: 'train', 7: 'truck', 8: 'boat', 9: 'traffic light',
-        #     10: 'fire hydrant', 11: 'stop sign', 12: 'parking meter', 13: 'bench',
-        #     14: 'bird', 15: 'cat', 16: 'dog', 17: 'horse', 18: 'sheep', 19: 'cow',
-        #     20: 'elephant', 21: 'bear', 22: 'zebra', 23: 'giraffe', 24: 'backpack',
-        #     25: 'umbrella', 26: 'handbag', 27: 'tie', 28: 'suitcase', 29: 'frisbee',
-        #     30: 'skis', 31: 'snowboard', 32: 'sports ball', 33: 'kite', 34: 'baseball bat',
-        #     35: 'baseball glove', 36: 'skateboard', 37: 'surfboard', 38: 'tennis racket',
-        #     39: 'bottle', 40: 'wine glass', 41: 'cup', 42: 'fork', 43: 'knife',
-        #     44: 'spoon', 45: 'bowl', 46: 'banana', 47: 'apple', 48: 'sandwich',
-        #     49: 'orange', 50: 'broccoli', 51: 'carrot', 52: 'hot dog', 53: 'pizza',
-        #     54: 'donut', 55: 'cake', 56: 'chair', 57: 'couch', 58: 'potted plant',
-        #     59: 'bed', 60: 'dining table', 61: 'toilet', 62: 'tv', 63: 'laptop',
-        #     64: 'mouse', 65: 'remote', 66: 'keyboard', 67: 'cell phone', 68: 'microwave',
-        #     69: 'oven', 70: 'toaster', 71: 'sink', 72: 'refrigerator', 73: 'book',
-        #     74: 'clock', 75: 'vase', 76: 'scissors', 77: 'teddy bear', 78: 'hair drier',
-        #     79: 'toothbrush'
-        # }
-        # self.names = {
-        #     0: '111'
-        # }
-        print(f"Model loaded successfully from {model_path}")
-        self._initialized = True
+            self.model = YOLO(model_path)
+            self.initialized = True
+            # 定义 COCO 数据集的类别名称
+            # self.names = {
+            #     0: 'person', 1: 'bicycle', 2: 'car', 3: 'motorcycle', 4: 'airplane',
+            #     5: 'bus', 6: 'train', 7: 'truck', 8: 'boat', 9: 'traffic light',
+            #     10: 'fire hydrant', 11: 'stop sign', 12: 'parking meter', 13: 'bench',
+            #     14: 'bird', 15: 'cat', 16: 'dog', 17: 'horse', 18: 'sheep', 19: 'cow',
+            #     20: 'elephant', 21: 'bear', 22: 'zebra', 23: 'giraffe', 24: 'backpack',
+            #     25: 'umbrella', 26: 'handbag', 27: 'tie', 28: 'suitcase', 29: 'frisbee',
+            #     30: 'skis', 31: 'snowboard', 32: 'sports ball', 33: 'kite', 34: 'baseball bat',
+            #     35: 'baseball glove', 36: 'skateboard', 37: 'surfboard', 38: 'tennis racket',
+            #     39: 'bottle', 40: 'wine glass', 41: 'cup', 42: 'fork', 43: 'knife',
+            #     44: 'spoon', 45: 'bowl', 46: 'banana', 47: 'apple', 48: 'sandwich',
+            #     49: 'orange', 50: 'broccoli', 51: 'carrot', 52: 'hot dog', 53: 'pizza',
+            #     54: 'donut', 55: 'cake', 56: 'chair', 57: 'couch', 58: 'potted plant',
+            #     59: 'bed', 60: 'dining table', 61: 'toilet', 62: 'tv', 63: 'laptop',
+            #     64: 'mouse', 65: 'remote', 66: 'keyboard', 67: 'cell phone', 68: 'microwave',
+            #     69: 'oven', 70: 'toaster', 71: 'sink', 72: 'refrigerator', 73: 'book',
+            #     74: 'clock', 75: 'vase', 76: 'scissors', 77: 'teddy bear', 78: 'hair drier',
+            #     79: 'toothbrush'
+            # }
+            # self.names = {
+            #     0: '111'
+            # }
+            print(f"Model loaded successfully from {model_path}")
 
     def preprocess_image(self, image_path: str) -> np.ndarray:
         """
@@ -74,18 +70,30 @@ class Detector:
             print(f"Error preprocessing image: {str(e)}")
             raise
 
-    def detect(self, image_path: str, image_type: str = 'visible') -> List[Dict[str, Any]]:
+    def detect(self, image_path: str, image_type: str = 'visible', conf: float = 0.5, iou: float = 0.5) -> List[Dict[str, Any]]:
         """
         执行目标检测
+        Args:
+            image_path: 图片路径
+            image_type: 图片类型（visible或infrared）
+            conf: 置信度阈值
+            iou: NMS IOU阈值
         """
         try:
+            print(f"Starting detection with conf={conf}, iou={iou} for {image_type} image")
+            
+            # 确保参数是浮点数
+            conf = float(conf)
+            iou = float(iou)
+            
             # 执行检测
             results = self.model.predict(
                 source=image_path,
-                conf=0.5,  # 置信度阈值
-                iou=0.5,   # NMS IOU 阈值
+                conf=conf,  # 使用传入的置信度阈值
+                iou=iou,   # 使用传入的IOU阈值
                 save=False,
-                device='cpu'  # 使用 CPU 进行推理
+                device='cpu',  # 使用 CPU 进行推理
+                verbose=False  # 减少输出
             )
             
             # 处理检测结果
@@ -97,7 +105,7 @@ class Detector:
             # 检查结果类型并相应处理
             if hasattr(result, 'boxes'):
                 # 新版本 YOLOv8 返回的是 Results 对象
-                boxes = result.boxes.xyxy.cpu().numpy()  # 预测框坐标
+                boxes = result.boxes.xyxy.cpu().numpy()  # 边界框坐标
                 confs = result.boxes.conf.cpu().numpy()  # 置信度
                 cls_ids = result.boxes.cls.cpu().numpy().astype(int)  # 类别ID
                 
@@ -137,6 +145,4 @@ class Detector:
             print(f"Detection error: {str(e)}")
             import traceback
             traceback.print_exc()
-            
-            # 出错时返回空列表
             return [] 

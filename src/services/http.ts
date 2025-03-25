@@ -59,8 +59,13 @@ export const manualAnnotations = async (data) => {
   return response.data;
 };
 
-export const autoAnnotate = async (data) => {
-  const response = await http.post(`/autoAnnotate`, data);
+export const autoAnnotate = async (data: {
+  groupId: number;
+  projectId: string;
+  conf?: number;
+  iou?: number;
+}) => {
+  const response = await http.post("/autoAnnotate", data);
   return response.data;
 };
 export const deleteProject = async (data) => {

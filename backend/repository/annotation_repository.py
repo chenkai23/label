@@ -203,3 +203,26 @@ class AnnotationRepository:
             
         # 其他未知格式，返回黑色
         return "rgb(0,0,0)" 
+
+    def delete_auto_annotations(self, group_id: int) -> bool:
+        """
+        删除图片组的自动标注结果，保留手动标注
+        """
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        try:
+            # 只删除自动标注结果
+            cursor.execute(
+                "DELETE FROM yolo_detections WHERE group_id = %s",
+                (group_id,)
+            )
+            
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error deleting auto annotations: {str(e)}")
+            conn.rollback()
+            return False
+        finally:
+            cursor.close()
+            conn.close() 
