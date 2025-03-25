@@ -43,9 +43,7 @@ const Projects = () => {
 
   const getData = useCallback(() => {
     getAllProjects().then((allProjects) => {
-      if (allProjects?.projects && allProjects.projects.length) {
-        setProjectList([...(allProjects.projects as [])]);
-      }
+      setProjectList(allProjects?.projects || []);
     });
   }, []);
 
