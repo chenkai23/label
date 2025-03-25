@@ -16,4 +16,4 @@ ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB
 
 # YOLO模型配置
-MODEL_PATH = os.path.join('models', 'yolov8n.pt')
+MODEL_PATH = os.path.join('models', 'best.pt')

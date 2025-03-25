@@ -11,7 +11,7 @@ import numpy as np
 
 class AnnotationService:
     def __init__(self):
-        model_path = os.path.join('models', 'yolov8n.pt')
+        model_path = os.path.join('models', 'best.pt')
         self.detector = Detector(model_path)
         self.image_repository = ImageRepository()
         self.annotation_repository = AnnotationRepository()
