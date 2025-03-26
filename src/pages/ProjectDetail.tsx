@@ -10,6 +10,8 @@ import {
   useDisclosure,
   VStack,
   useToast,
+  Select,
+  Flex,
 } from "@chakra-ui/react";
 import { FiUpload, FiDownload } from "react-icons/fi";
 import { useParams } from "react-router-dom";
@@ -39,6 +41,7 @@ const ProjectDetail = () => {
   // const project = useStore((state) => state.projects.find((p) => p.id === id));
   const [projectInfo, setProjectInfo] = useState<any>();
   const [isExporting, setIsExporting] = useState(false);
+  const [sortOption, setSortOption] = useState<string>("uploadTime_desc");
   const toast = useToast();
 
   const refreshProjectInfo = useCallback(() => {
@@ -144,6 +147,41 @@ const ProjectDetail = () => {
     refreshProjectInfo();
   }, [onUploadModalClose, refreshProjectInfo]);
 
+  const getSortedImageGroups = useCallback(() => {
+    if (!projectInfo?.imageGroups) return [];
+    
+    const imageGroups = [...projectInfo.imageGroups];
+    
+    switch (sortOption) {
+      case "uploadTime_asc":
+        // 按ID升序排序（假设ID越小表示上传时间越早）
+        return imageGroups.sort((a, b) => a.id - b.id);
+      case "uploadTime_desc":
+        // 按ID降序排序（假设ID越大表示上传时间越晚）
+        return imageGroups.sort((a, b) => b.id - a.id);
+      case "name_asc":
+        // 按图片组名字升序排序
+        return imageGroups.sort((a, b) => {
+          const nameA = a.originalName || "";
+          const nameB = b.originalName || "";
+          return nameA.localeCompare(nameB);
+        });
+      case "name_desc":
+        // 按图片组名字降序排序
+        return imageGroups.sort((a, b) => {
+          const nameA = a.originalName || "";
+          const nameB = b.originalName || "";
+          return nameB.localeCompare(nameA);
+        });
+      default:
+        return imageGroups;
+    }
+  }, [projectInfo, sortOption]);
+
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortOption(e.target.value);
+  };
+
   return (
     <Container maxW="container.xl" py={8}>
       <VStack spacing={8} align="stretch">
@@ -190,6 +228,20 @@ const ProjectDetail = () => {
           </HStack>
         </HStack>
 
+        <Flex justify="flex-end" mb={4}>
+          <Select 
+            width="250px" 
+            value={sortOption} 
+            onChange={handleSortChange}
+            bg={colorMode === "dark" ? "gray.700" : "white"}
+          >
+            <option value="uploadTime_desc">上传时间（最新优先）</option>
+            <option value="uploadTime_asc">上传时间（最早优先）</option>
+            <option value="name_asc">图片组名称（A-Z）</option>
+            <option value="name_desc">图片组名称（Z-A）</option>
+          </Select>
+        </Flex>
+
         {!projectInfo?.imageGroups || projectInfo?.imageGroups.length === 0 ? (
           <Box
             p={8}
@@ -201,7 +253,7 @@ const ProjectDetail = () => {
           </Box>
         ) : (
           <Grid templateColumns="repeat(auto-fill, minmax(300px, 1fr))" gap={6}>
-            {projectInfo?.imageGroups.map((pair) => (
+            {getSortedImageGroups().map((pair) => (
               <ImageCard
                 key={pair.id}
                 groupId={pair.id}
