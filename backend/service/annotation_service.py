@@ -1,6 +1,7 @@
 from utils.detector import Detector
 from repository.image_repository import ImageRepository
 from repository.annotation_repository import AnnotationRepository
+from repository.project_repository import ProjectRepository
 import os
 from typing import List, Dict
 import zipfile
@@ -14,6 +15,7 @@ class AnnotationService:
         self.detector = Detector()
         self.image_repository = ImageRepository()
         self.annotation_repository = AnnotationRepository()
+        self.project_repository = ProjectRepository()
         
     def auto_annotate(self, group_id: str, project_id: str, conf: float = 0.5, iou: float = 0.5) -> dict:
         """
@@ -194,6 +196,9 @@ class AnnotationService:
             # 收集所有类别
             all_classes = set()
             
+            # 文件名映射表，用于处理重名文件
+            filename_map = {}
+            
             # 处理每个图片组
             for group in image_groups:
                 group_id = group.id
@@ -211,9 +216,25 @@ class AnnotationService:
                     if img is not None:
                         img_height, img_width = img.shape[:2]
                         
+                        # 获取原始文件名
+                        original_visible_name = group.visible_original_name
+                        if not original_visible_name:
+                            # 如果没有原始文件名，则使用组ID作为文件名
+                            visible_filename = f"{group_id}_visible.jpg"
+                        else:
+                            # 确保文件扩展名是.jpg
+                            visible_filename = os.path.splitext(original_visible_name)[0] + ".jpg"
+                            
+                            # 处理重名文件
+                            base_name, ext = os.path.splitext(visible_filename)
+                            counter = 1
+                            while visible_filename in filename_map:
+                                visible_filename = f"{base_name}_{counter}{ext}"
+                                counter += 1
+                            filename_map[visible_filename] = True
+                        
                         # 复制图片到导出目录
-                        image_filename = f"{group_id}_visible.jpg"
-                        shutil.copy2(group.visible_image_path, os.path.join(images_dir, image_filename))
+                        shutil.copy2(group.visible_image_path, os.path.join(images_dir, visible_filename))
                         
                         # 合并自动标注和手动标注
                         visible_annotations = []
@@ -222,9 +243,10 @@ class AnnotationService:
                         if 'visible' in manual_annotations:
                             visible_annotations.extend(manual_annotations['visible'])
                         
-                        # 创建标签文件
+                        # 创建标签文件 - 标签文件名与图片名保持一致（扩展名不同）
                         if visible_annotations:
-                            label_path = os.path.join(labels_dir, f"{group_id}_visible.txt")
+                            label_filename = os.path.splitext(visible_filename)[0] + ".txt"
+                            label_path = os.path.join(labels_dir, label_filename)
                             with open(label_path, 'w') as f:
                                 for anno in visible_annotations:
                                     # 收集类别
@@ -252,9 +274,25 @@ class AnnotationService:
                     if img is not None:
                         img_height, img_width = img.shape[:2]
                         
+                        # 获取原始文件名
+                        original_infrared_name = group.infrared_original_name
+                        if not original_infrared_name:
+                            # 如果没有原始文件名，则使用组ID作为文件名
+                            infrared_filename = f"{group_id}_infrared.jpg"
+                        else:
+                            # 确保文件扩展名是.jpg
+                            infrared_filename = os.path.splitext(original_infrared_name)[0] + ".jpg"
+                            
+                            # 处理重名文件
+                            base_name, ext = os.path.splitext(infrared_filename)
+                            counter = 1
+                            while infrared_filename in filename_map:
+                                infrared_filename = f"{base_name}_{counter}{ext}"
+                                counter += 1
+                            filename_map[infrared_filename] = True
+                        
                         # 复制图片到导出目录
-                        image_filename = f"{group_id}_infrared.jpg"
-                        shutil.copy2(group.infrared_image_path, os.path.join(images_dir, image_filename))
+                        shutil.copy2(group.infrared_image_path, os.path.join(images_dir, infrared_filename))
                         
                         # 合并自动标注和手动标注
                         infrared_annotations = []
@@ -263,9 +301,10 @@ class AnnotationService:
                         if 'infrared' in manual_annotations:
                             infrared_annotations.extend(manual_annotations['infrared'])
                         
-                        # 创建标签文件
+                        # 创建标签文件 - 标签文件名与图片名保持一致（扩展名不同）
                         if infrared_annotations:
-                            label_path = os.path.join(labels_dir, f"{group_id}_infrared.txt")
+                            label_filename = os.path.splitext(infrared_filename)[0] + ".txt"
+                            label_path = os.path.join(labels_dir, label_filename)
                             with open(label_path, 'w') as f:
                                 for anno in infrared_annotations:
                                     # 收集类别
