@@ -74,6 +74,9 @@ def export_annotations():
         # 导出标注数据
         zip_path = annotation_service.export_annotations(project_id)
         
+        # 获取文件名（从路径中提取）
+        file_name = os.path.basename(zip_path)
+        
         # 以流的形式返回ZIP文件
         def generate():
             with open(zip_path, 'rb') as f:
@@ -89,7 +92,7 @@ def export_annotations():
         
         response = Response(stream_with_context(generate()), 
                            mimetype='application/zip')
-        response.headers['Content-Disposition'] = f'attachment; filename=project_{project_id}_yolo_export.zip'
+        response.headers['Content-Disposition'] = f'attachment; filename={file_name}'
         return response
         
     except Exception as e:

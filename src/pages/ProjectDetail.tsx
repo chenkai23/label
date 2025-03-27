@@ -92,7 +92,13 @@ const ProjectDetail = () => {
     // } finally {
     //   setIsExporting(false);
     // }
-    downloadFile({ projectId: id }, exportAnnotations, "导出文件", "zip")
+    
+    // 获取并处理项目名称为安全的文件名
+    const fileName = projectInfo?.name 
+      ? `${projectInfo.name}_标注数据` 
+      : "标注数据";
+    
+    downloadFile({ projectId: id }, exportAnnotations, fileName, "zip")
       .then((res) => {
         toast({
           title: "导出成功",

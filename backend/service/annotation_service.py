@@ -170,6 +170,17 @@ class AnnotationService:
         try:
             project_id_int = int(project_id)
             
+            # 获取项目信息
+            project = self.project_repository.get_by_id(project_id_int)
+            if not project:
+                raise ValueError(f"Project with ID {project_id} not found")
+            
+            project_name = project.name
+            # 移除不安全的文件名字符
+            safe_project_name = "".join(c for c in project_name if c.isalnum() or c in [' ', '_', '-']).strip()
+            if not safe_project_name:
+                safe_project_name = f"project_{project_id}"
+            
             # 创建临时目录
             temp_dir = tempfile.mkdtemp()
             images_dir = os.path.join(temp_dir, 'images')
@@ -296,7 +307,7 @@ class AnnotationService:
                             f.write(f"{class_id} {' '.join(parts[1:])}\n")
             
             # 创建ZIP文件
-            zip_path = os.path.join(os.path.dirname(temp_dir), f"project_{project_id}_export.zip")
+            zip_path = os.path.join(os.path.dirname(temp_dir), f"{safe_project_name}_export.zip")
             with zipfile.ZipFile(zip_path, 'w') as zipf:
                 # 添加图片
                 for root, _, files in os.walk(images_dir):
