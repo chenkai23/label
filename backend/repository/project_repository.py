@@ -398,4 +398,27 @@ class ProjectRepository:
             return False
         finally:
             cursor.close()
+            conn.close()
+
+    def check_name_exists(self, name: str) -> bool:
+        """
+        检查项目名称是否已存在
+        
+        Args:
+            name: 项目名称
+            
+        Returns:
+            bool: 名称是否已存在
+        """
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        try:
+            cursor.execute(
+                "SELECT COUNT(*) as count FROM projects WHERE name = %s",
+                (name,)
+            )
+            result = cursor.fetchone()
+            return result and result['count'] > 0
+        finally:
+            cursor.close()
             conn.close() 

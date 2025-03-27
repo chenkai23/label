@@ -8,6 +8,10 @@ class ProjectService:
         self.project_repository = ProjectRepository()
         
     def create_project(self, name: str, description: str, tags: List[dict]) -> Project:
+        # 首先检查项目名是否已存在
+        if self.project_repository.check_name_exists(name):
+            raise ValueError("项目名称已存在，请选择其他名称")
+            
         project_id = str(uuid.uuid4())
         
         # 创建项目对象

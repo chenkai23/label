@@ -64,7 +64,6 @@ const CreateProjectModal = ({ isOpen, onClose }: CreateProjectModalProps) => {
         images: [],
       };
 
-      addProject(newProject);
       let labelArr = label.trim().split("-");
       let rgbColor = new RandomColor(labelArr.length).rgbArray;
       let tagArr = labelArr.map((tag, index) => {
@@ -73,32 +72,52 @@ const CreateProjectModal = ({ isOpen, onClose }: CreateProjectModalProps) => {
           color: rgbColor[index].color,
         };
       });
-      createProject({
-        name: name.trim(),
-        tags: tagArr,
-        description: description.trim(),
-      })
-        .then((res) => {
+      
+      // 先发送请求，成功后才添加到本地状态
+      try {
+        await createProject({
+          name: name.trim(),
+          tags: tagArr,
+          description: description.trim(),
+        });
+        
+        // 添加到本地状态
+        addProject(newProject);
+        
+        toast({
+          title: "项目创建成功",
+          status: "success",
+          duration: 2000,
+        });
+        
+        // 清空表单
+        setName("");
+        setLabel("");
+        setDescription("");
+        
+        // 关闭模态框
+        onClose();
+      } catch (err: any) {
+        // 检查是否是项目名称重复错误
+        if (err.response && err.response.data && err.response.data.error && 
+            err.response.data.error.includes("项目名称已存在")) {
           toast({
-            title: "项目创建成功",
-            status: "success",
+            title: "项目名称重复",
+            description: "请重新命名",
+            status: "error",
             duration: 2000,
           });
-        })
-        .catch((err) => {
+          // 不关闭模态框，让用户修改名称
+        } else {
           toast({
             title: "创建失败",
             description: "请稍后重试",
             status: "error",
             duration: 2000,
           });
-        })
-        .finally(() => {
           onClose();
-        });
-
-      setName("");
-      setDescription("");
+        }
+      }
     } catch (error) {
       toast({
         title: "创建失败",
@@ -106,6 +125,7 @@ const CreateProjectModal = ({ isOpen, onClose }: CreateProjectModalProps) => {
         status: "error",
         duration: 2000,
       });
+      onClose();
     } finally {
       setIsLoading(false);
     }

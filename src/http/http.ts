@@ -16,9 +16,13 @@ const http = {
         if (res.status === 200) {
           return res;
         } else {
+          return res; // 返回非200状态的响应，由调用方处理
         }
       })
-      .catch((error) => {});
+      .catch((error) => {
+        // 将错误抛出，由调用方捕获处理
+        throw error;
+      });
   },
   // data为body体内的请求值，params为post请求链接后以?xxx=xxx形式增添的请求值
   post(url: string, data: any, params?: any, controller?: any, extraConfig?: any) {
@@ -42,9 +46,13 @@ const http = {
         if (res.status === 200) {
           return res;
         } else {
+          return res; // 返回非200状态的响应，由调用方处理
         }
       })
-      .catch((error) => {});
+      .catch((error) => {
+        // 将错误抛出，由调用方捕获处理
+        throw error;
+      });
   },
   put(url: string, params: any) {
     const config: any = {

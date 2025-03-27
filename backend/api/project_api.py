@@ -32,7 +32,11 @@ def create_project():
             "createdAt": project.created_at.isoformat()
         })
         
+    except ValueError as e:
+        # 处理项目名称重复等特定错误
+        return jsonify({'error': str(e)}), 400
     except Exception as e:
+        # 处理其他未知错误
         return jsonify({'error': str(e)}), 500
 
 def _format_color(color: str) -> str:
