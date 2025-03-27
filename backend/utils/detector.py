@@ -6,6 +6,7 @@ from typing import List, Dict, Any
 import os
 from PIL import Image
 import io
+from config.settings import RGB_MODEL_PATH, IR_MODEL_PATH
 
 class Detector:
     _instance = None
@@ -18,8 +19,9 @@ class Detector:
     def __init__(self):
         if not hasattr(self, 'initialized'):
             from ultralytics import YOLO
-            model_path = os.path.join('models', 'best.pt')
-            self.model = YOLO(model_path)
+            # 加载可见光和红外两个模型
+            self.rgb_model = YOLO(RGB_MODEL_PATH)
+            self.ir_model = YOLO(IR_MODEL_PATH)
             self.initialized = True
             # 定义 COCO 数据集的类别名称
             # self.names = {
@@ -44,7 +46,8 @@ class Detector:
             # self.names = {
             #     0: '111'
             # }
-            print(f"Model loaded successfully from {model_path}")
+            print(f"RGB Model loaded successfully from {RGB_MODEL_PATH}")
+            print(f"IR Model loaded successfully from {IR_MODEL_PATH}")
 
     def preprocess_image(self, image_path: str) -> np.ndarray:
         """
@@ -86,8 +89,16 @@ class Detector:
             conf = float(conf)
             iou = float(iou)
             
+            # 根据图片类型选择不同的模型
+            if image_type == 'visible':
+                model = self.rgb_model
+                print(f"Using RGB model for {image_type} image")
+            else:
+                model = self.ir_model
+                print(f"Using IR model for {image_type} image")
+            
             # 执行检测
-            results = self.model.predict(
+            results = model.predict(
                 source=image_path,
                 conf=conf,  # 使用传入的置信度阈值
                 iou=iou,   # 使用传入的IOU阈值

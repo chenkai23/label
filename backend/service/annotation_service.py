@@ -86,6 +86,7 @@ class AnnotationService:
     def _get_color_for_class(self, class_name: str) -> str:
         """
         根据类别名称返回对应的颜色
+        使用预定义颜色表，如果类别不在表中，则根据类名哈希生成固定颜色
         """
         # 为常见类别定义颜色
         color_map = {
@@ -99,8 +100,23 @@ class AnnotationService:
             'cat': 'rgb(0,128,0)',         # 深绿色
         }
         
-        # 返回对应颜色，如果没有预定义则返回默认颜色
-        return color_map.get(class_name, 'rgb(128,128,128)')  # 默认灰色
+        # 如果类别在预定义列表中，则使用预定义颜色
+        if class_name in color_map:
+            return color_map[class_name]
+        
+        # 否则根据类名生成固定的唯一颜色
+        # 使用类名的哈希值生成RGB颜色
+        hash_value = hash(class_name) & 0xFFFFFF
+        r = (hash_value & 0xFF0000) >> 16
+        g = (hash_value & 0x00FF00) >> 8
+        b = hash_value & 0x0000FF
+        
+        # 确保颜色不会太暗或太亮
+        r = max(min(r, 230), 50)  # 避免完全黑色或白色
+        g = max(min(g, 230), 50)
+        b = max(min(b, 230), 50)
+        
+        return f'rgb({r},{g},{b})'
 
     def get_annotations(self, group_id: str) -> dict:
         """
