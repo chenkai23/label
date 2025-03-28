@@ -163,15 +163,24 @@ GRANT ALL PRIVILEGES ON image_annotation.* TO 'your_username'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
-3. 创建数据库
-```sql
-CREATE DATABASE image_annotation CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+3. 配置环境变量
+编辑`backend/.env`文件，设置数据库连接信息：
+```
+MYSQL_HOST=localhost
+MYSQL_USER=your_mysql_username
+MYSQL_PASSWORD=your_mysql_password
+MYSQL_DB=image_annotation
 ```
 
-4. 导入数据库结构
+4. 初始化数据库
 ```bash
-mysql -u your_username -p your_password image_annotation < backend/database/schema.sql
+cd backend
+python database/init_db.py
 ```
+此脚本将：
+- 创建数据库（如果不存在）
+- 创建所需的表结构
+- 自动处理表已存在的情况
 
 ## 项目特性
 
