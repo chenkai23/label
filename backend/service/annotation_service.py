@@ -44,9 +44,9 @@ class AnnotationService:
             visible_results = self.detector.detect(image_group.visible_image_path, 'visible', conf, iou)
             infrared_results = self.detector.detect(image_group.infrared_image_path, 'infrared', conf, iou)
             
-            # 转换检测结果格式
-            visible_annotations = self._format_yolo_results(visible_results, 'visible')
-            infrared_annotations = self._format_yolo_results(infrared_results, 'infrared')
+            # 转换检测结果格式，传递 project_id 参数
+            visible_annotations = self._format_yolo_results(visible_results, 'visible', project_id_int)
+            infrared_annotations = self._format_yolo_results(infrared_results, 'infrared', project_id_int)
             
             # 合并检测结果
             yolo_data = {
@@ -64,7 +64,7 @@ class AnnotationService:
             print(f"Error during annotation: {str(e)}")
             raise
 
-    def _format_yolo_results(self, results: list, image_type: str) -> list:
+    def _format_yolo_results(self, results: list, image_type: str, project_id: int) -> list:
         """
         将YOLO检测结果转换为前端需要的格式
         """
@@ -73,7 +73,7 @@ class AnnotationService:
         for i, detection in enumerate(results):
             # 获取类别对应的颜色
             class_name = detection.get('class_name', 'unknown')
-            color = self._get_color_for_class(class_name)
+            color = self._get_color_for_class(class_name, project_id)
             
             formatted_results.append({
                 'id': f"{image_type}_box{i+1}",  # 生成唯一ID
@@ -85,10 +85,13 @@ class AnnotationService:
         
         return formatted_results
 
-    def _get_color_for_class(self, class_name: str) -> str:
+    def _get_color_for_class(self, class_name: str, project_id: int = None) -> str:
         """
         根据类别名称返回对应的颜色
-        使用预定义颜色表，如果类别不在表中，则根据类名哈希生成固定颜色
+        优先级：
+        1. 预定义颜色表中的颜色
+        2. 项目标签预设列表中同名标签的颜色
+        3. 根据类名哈希生成固定颜色
         """
         # 为常见类别定义颜色
         color_map = {
@@ -106,7 +109,43 @@ class AnnotationService:
         if class_name in color_map:
             return color_map[class_name]
         
-        # 否则根据类名生成固定的唯一颜色
+        # 如果提供了project_id，查询项目的标签预设列表
+        if project_id is not None:
+            try:
+                # 获取项目标签预设
+                project_tags = self.project_repository.get_project_tags(project_id)
+                
+                # 查找同名标签
+                for tag in project_tags:
+                    if tag['name'] == class_name:
+                        # 确保颜色格式正确
+                        color = tag.get('color')
+                        if color:
+                            # 如果颜色以 rgb 开头，则直接使用
+                            if color.startswith('rgb'):
+                                return color
+                            # 如果是十六进制颜色，转换为 rgb 格式
+                            if color.startswith('#'):
+                                try:
+                                    # 去掉 # 号
+                                    hex_color = color.lstrip('#')
+                                    
+                                    # 处理简写形式 (#RGB)
+                                    if len(hex_color) == 3:
+                                        hex_color = ''.join([c*2 for c in hex_color])
+                                        
+                                    # 转换为 RGB
+                                    r = int(hex_color[0:2], 16)
+                                    g = int(hex_color[2:4], 16)
+                                    b = int(hex_color[4:6], 16)
+                                    
+                                    return f"rgb({r},{g},{b})"
+                                except Exception as e:
+                                    print(f"Error converting hex color: {e}")
+            except Exception as e:
+                print(f"Error retrieving project tags: {e}")
+        
+        # 如果预设中没有找到，根据类名生成固定的唯一颜色
         # 使用类名的哈希值生成RGB颜色
         hash_value = hash(class_name) & 0xFFFFFF
         r = (hash_value & 0xFF0000) >> 16
@@ -114,7 +153,7 @@ class AnnotationService:
         b = hash_value & 0x0000FF
         
         # 确保颜色不会太暗或太亮
-        r = max(min(r, 230), 50)  # 避免完全黑色或白色
+        r = max(min(r, 230), 50)
         g = max(min(g, 230), 50)
         b = max(min(b, 230), 50)
         

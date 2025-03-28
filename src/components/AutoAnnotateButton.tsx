@@ -8,15 +8,19 @@ import {
   useToast,
   VStack,
   HStack,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
   Text,
+  Input,
+  Slider,
+  SliderTrack,
+  SliderFilledTrack,
+  SliderThumb,
+  FormControl,
+  FormLabel,
+  InputGroup,
+  InputRightAddon,
 } from "@chakra-ui/react";
 import { FiCpu } from "react-icons/fi";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { autoAnnotate } from "../services/http";
 
@@ -40,8 +44,66 @@ const AutoAnnotateButton = ({
   const [isLoading, setIsLoading] = useState(false);
   const [conf, setConf] = useState(0.5);
   const [iou, setIou] = useState(0.5);
+  const [confInput, setConfInput] = useState("0.5");
+  const [iouInput, setIouInput] = useState("0.5");
   const toast = useToast();
   const { id } = useParams<{ id: string }>();
+
+  useEffect(() => {
+    setConfInput(conf.toString());
+  }, [conf]);
+
+  useEffect(() => {
+    setIouInput(iou.toString());
+  }, [iou]);
+
+  const handleConfInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfInput(e.target.value);
+  };
+
+  const handleIouInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIouInput(e.target.value);
+  };
+
+  const handleConfBlur = () => {
+    const value = parseFloat(confInput);
+    if (!isNaN(value) && value >= 0 && value <= 1) {
+      setConf(value);
+    } else {
+      setConfInput(conf.toString());
+      toast({
+        title: "无效的置信度值",
+        description: "请输入0-1之间的数字",
+        status: "warning",
+        duration: 2000,
+      });
+    }
+  };
+
+  const handleIouBlur = () => {
+    const value = parseFloat(iouInput);
+    if (!isNaN(value) && value >= 0 && value <= 1) {
+      setIou(value);
+    } else {
+      setIouInput(iou.toString());
+      toast({
+        title: "无效的IOU值",
+        description: "请输入0-1之间的数字",
+        status: "warning",
+        duration: 2000,
+      });
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, type: 'conf' | 'iou') => {
+    if (e.key === 'Enter') {
+      if (type === 'conf') {
+        handleConfBlur();
+      } else {
+        handleIouBlur();
+      }
+    }
+  };
 
   const handleAutoAnnotate = async () => {
     setIsLoading(true);
@@ -109,44 +171,66 @@ const AutoAnnotateButton = ({
       >
         AI
       </MenuButton>
-      <MenuList p={4}>
+      <MenuList p={4} minW="280px">
         <VStack spacing={4} align="stretch">
-          <HStack justify="space-between">
-            <Text>置信度阈值</Text>
-            <NumberInput
-              size="sm"
-              min={0}
-              max={1}
-              step={0.1}
-              value={conf}
-              onChange={(_, value) => setConf(value)}
-              w="120px"
-            >
-              <NumberInputField />
-              <NumberInputStepper>
-                <NumberIncrementStepper />
-                <NumberDecrementStepper />
-              </NumberInputStepper>
-            </NumberInput>
-          </HStack>
-          <HStack justify="space-between">
-            <Text>IOU阈值</Text>
-            <NumberInput
-              size="sm"
-              min={0}
-              max={1}
-              step={0.1}
-              value={iou}
-              onChange={(_, value) => setIou(value)}
-              w="120px"
-            >
-              <NumberInputField />
-              <NumberInputStepper>
-                <NumberIncrementStepper />
-                <NumberDecrementStepper />
-              </NumberInputStepper>
-            </NumberInput>
-          </HStack>
+          <FormControl>
+            <FormLabel fontSize="sm" mb={1}>置信度阈值</FormLabel>
+            <HStack>
+              <Slider 
+                value={conf} 
+                min={0} 
+                max={1} 
+                step={0.01}
+                onChange={(v) => setConf(v)}
+                flex="1"
+                colorScheme="brand"
+              >
+                <SliderTrack>
+                  <SliderFilledTrack />
+                </SliderTrack>
+                <SliderThumb boxSize={6} />
+              </Slider>
+              <InputGroup size="sm" width="80px">
+                <Input
+                  value={confInput}
+                  onChange={handleConfInputChange}
+                  onBlur={handleConfBlur}
+                  onKeyDown={(e) => handleKeyDown(e, 'conf')}
+                  textAlign="right"
+                />
+              </InputGroup>
+            </HStack>
+          </FormControl>
+          
+          <FormControl>
+            <FormLabel fontSize="sm" mb={1}>IOU阈值</FormLabel>
+            <HStack>
+              <Slider 
+                value={iou} 
+                min={0} 
+                max={1} 
+                step={0.01}
+                onChange={(v) => setIou(v)}
+                flex="1"
+                colorScheme="brand"
+              >
+                <SliderTrack>
+                  <SliderFilledTrack />
+                </SliderTrack>
+                <SliderThumb boxSize={6} />
+              </Slider>
+              <InputGroup size="sm" width="80px">
+                <Input
+                  value={iouInput}
+                  onChange={handleIouInputChange}
+                  onBlur={handleIouBlur}
+                  onKeyDown={(e) => handleKeyDown(e, 'iou')}
+                  textAlign="right"
+                />
+              </InputGroup>
+            </HStack>
+          </FormControl>
+
           <Button
             colorScheme="brand"
             onClick={handleAutoAnnotate}

@@ -111,6 +111,7 @@ const AnnotationRect = memo(
         {isSelected && (
           <Transformer
             ref={transformerRef}
+            keepRatio={false}
             boundBoxFunc={(oldBox, newBox) => {
               const minSize = 5;
               if (newBox.width < minSize || newBox.height < minSize) {

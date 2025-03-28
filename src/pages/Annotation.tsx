@@ -173,27 +173,27 @@ const AnnotationPage = () => {
 
   // 计算上一组和下一组的ID
   const prevGroupId = useMemo(() => {
-    return currentIndex > 0 ? allGroupIds[currentIndex - 1] : null;
+    return currentIndex > 0 ? allGroupIds[currentIndex - 1] : allGroupIds[allGroupIds.length - 1];
   }, [allGroupIds, currentIndex]);
 
   const nextGroupId = useMemo(() => {
-    return currentIndex < allGroupIds.length - 1
-      ? allGroupIds[currentIndex + 1]
-      : null;
+    return currentIndex < allGroupIds.length - 1 ? allGroupIds[currentIndex + 1] : allGroupIds[0];
   }, [allGroupIds, currentIndex]);
 
   // 处理导航到上一组和下一组
   const handleNavigateToPrev = useCallback(() => {
-    if (prevGroupId) {
-      navigate(`/annotation/${prevGroupId}`);
+    if (allGroupIds.length > 0) {
+      const targetId = currentIndex > 0 ? allGroupIds[currentIndex - 1] : allGroupIds[allGroupIds.length - 1];
+      navigate(`/annotation/${targetId}`);
     }
-  }, [navigate, prevGroupId]);
+  }, [navigate, allGroupIds, currentIndex]);
 
   const handleNavigateToNext = useCallback(() => {
-    if (nextGroupId) {
-      navigate(`/annotation/${nextGroupId}`);
+    if (allGroupIds.length > 0) {
+      const targetId = currentIndex < allGroupIds.length - 1 ? allGroupIds[currentIndex + 1] : allGroupIds[0];
+      navigate(`/annotation/${targetId}`);
     }
-  }, [navigate, nextGroupId]);
+  }, [navigate, allGroupIds, currentIndex]);
 
   // 处理标注变更
   const handleAnnotationChange = async (
@@ -379,12 +379,12 @@ const AnnotationPage = () => {
       }
 
       // 左箭头 - 上一组
-      if (e.key === "ArrowLeft" && prevGroupId && !loading) {
+      if (e.key === "ArrowLeft" && allGroupIds.length > 1 && !loading) {
         handleNavigateToPrev();
       }
 
       // 右箭头 - 下一组
-      if (e.key === "ArrowRight" && nextGroupId && !loading) {
+      if (e.key === "ArrowRight" && allGroupIds.length > 1 && !loading) {
         handleNavigateToNext();
       }
     };
@@ -394,8 +394,7 @@ const AnnotationPage = () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [
-    prevGroupId,
-    nextGroupId,
+    allGroupIds.length,
     loading,
     handleNavigateToPrev,
     handleNavigateToNext,
@@ -620,9 +619,9 @@ const AnnotationPage = () => {
             <IconButton
               aria-label="上一组"
               icon={<FiArrowLeft />}
-              colorScheme={prevGroupId ? "brand" : "gray"}
+              colorScheme="brand"
               onClick={handleNavigateToPrev}
-              isDisabled={!prevGroupId || loading}
+              isDisabled={loading || allGroupIds.length <= 1}
               size="md"
               variant={colorMode === "dark" ? "solid" : "outline"}
             />
@@ -638,9 +637,9 @@ const AnnotationPage = () => {
             <IconButton
               aria-label="下一组"
               icon={<FiArrowRight />}
-              colorScheme={nextGroupId ? "brand" : "gray"}
+              colorScheme="brand"
               onClick={handleNavigateToNext}
-              isDisabled={!nextGroupId || loading}
+              isDisabled={loading || allGroupIds.length <= 1}
               size="md"
               variant={colorMode === "dark" ? "solid" : "outline"}
             />

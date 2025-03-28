@@ -421,4 +421,35 @@ class ProjectRepository:
             return result and result['count'] > 0
         finally:
             cursor.close()
+            conn.close()
+
+    def get_project_tags(self, project_id: int) -> List[Dict]:
+        """
+        获取项目的标签预设列表
+        """
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        try:
+            # 获取项目的标签
+            cursor.execute("""
+                SELECT id, tag as name, color
+                FROM project_tags
+                WHERE project_id = %s
+                ORDER BY id
+            """, (project_id,))
+            
+            tags = []
+            for tag in cursor.fetchall():
+                tags.append({
+                    'id': str(tag['id']),
+                    'name': tag['name'],
+                    'color': self._format_color(tag['color'])
+                })
+            
+            return tags
+        except Exception as e:
+            print(f"Error retrieving project tags: {str(e)}")
+            return []
+        finally:
+            cursor.close()
             conn.close() 
