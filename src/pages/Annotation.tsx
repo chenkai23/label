@@ -84,6 +84,11 @@ const AnnotationPage = () => {
   // };
 
   const [imagePair, setImagePair] = useState<any>();
+  // 添加状态来跟踪哪些是自动标注的框
+  const [autoAnnotationIds, setAutoAnnotationIds] = useState<{visible: string[], infrared: string[]}>({
+    visible: [],
+    infrared: []
+  });
   const initAnnotationHistory = useStore(
     (state) => state.initAnnotationHistory
   );
@@ -110,6 +115,13 @@ const AnnotationPage = () => {
         : [];
       let yoloVisible = res?.yoloData.visible ? res?.yoloData.visible : [];
       let yoloInfrared = res?.yoloData.infrared ? res?.yoloData.infrared : [];
+      
+      // 记录自动标注的ID
+      setAutoAnnotationIds({
+        visible: yoloVisible.map(item => item.id),
+        infrared: yoloInfrared.map(item => item.id)
+      });
+      
       let vAnnotations = visible.concat(yoloVisible);
       let iAnnotations = infrared.concat(yoloInfrared);
       setImagePair({
@@ -184,6 +196,26 @@ const AnnotationPage = () => {
 
     try {
       let cloneImagePair = cloneDeep(imagePair);
+      
+      // 分离手动标注和自动标注数据
+      const originalAnnotations = type === "visible" 
+        ? imagePair.visibleImage.annotations 
+        : imagePair.infraredImage.annotations;
+      
+      // 找出被删除的注释框ID
+      const originalIds = originalAnnotations.map(a => a.id);
+      const newIds = newAnnotations.map(a => a.id);
+      const deletedIds = originalIds.filter(id => !newIds.includes(id));
+      
+      // 检查是否是自动标注被修改
+      const isAutoAnnotationModified = deletedIds.some(id => 
+        autoAnnotationIds[type].includes(id)
+      );
+      
+      const isModifyingAutoAnnotations = newAnnotations.some(anno => 
+        autoAnnotationIds[type].includes(anno.id)
+      );
+      
       if (type === "visible") {
         const newImagePair = {
           ...imagePair,
@@ -208,18 +240,49 @@ const AnnotationPage = () => {
         setImagePair(newImagePair);
         cloneImagePair.infraredImage.annotations = newAnnotations;
       }
-      manualAnnotations({
-        projectId: projectInfo.projectId,
-        groupId: id,
-        visibleImageId: imagePair.visibleImage.id,
-        infraredImageId: imagePair.infraredImage.id,
-        infraredImage: {
-          annotations: cloneImagePair.infraredImage.annotations,
-        },
-        visibleImage: {
-          annotations: cloneImagePair.visibleImage.annotations,
-        },
-      })
+      
+      // 准备要发送到后端的数据
+      // 分离手动标注和自动标注
+      const manualVisibleAnnotations = cloneImagePair.visibleImage.annotations.filter(
+        a => !autoAnnotationIds.visible.includes(a.id)
+      );
+      
+      const manualInfraredAnnotations = cloneImagePair.infraredImage.annotations.filter(
+        a => !autoAnnotationIds.infrared.includes(a.id)
+      );
+      
+      // 自动标注的数据
+      const autoVisibleAnnotations = cloneImagePair.visibleImage.annotations.filter(
+        a => autoAnnotationIds.visible.includes(a.id)
+      );
+      
+      const autoInfraredAnnotations = cloneImagePair.infraredImage.annotations.filter(
+        a => autoAnnotationIds.infrared.includes(a.id)
+      );
+      
+      // 如果是修改或删除自动标注框，则需要更新YOLO标注数据
+      if (isAutoAnnotationModified || isModifyingAutoAnnotations) {
+        // 这里应该调用一个新的API来更新自动标注数据
+        // 为简化实现，先复用manualAnnotations接口，但发送数据结构需要调整
+        manualAnnotations({
+          projectId: projectInfo.projectId,
+          groupId: id,
+          visibleImageId: imagePair.visibleImage.id,
+          infraredImageId: imagePair.infraredImage.id,
+          infraredImage: {
+            annotations: manualInfraredAnnotations,
+          },
+          visibleImage: {
+            annotations: manualVisibleAnnotations,
+          },
+          // 新增字段，表明这是对自动标注的修改
+          yoloModifications: {
+            visible: autoVisibleAnnotations,
+            infrared: autoInfraredAnnotations
+          },
+          // 表明是对自动标注数据的修改
+          isAutoAnnotationModified: true
+        })
         .then((res) => {
           toast({
             title: "保存成功",
@@ -235,6 +298,36 @@ const AnnotationPage = () => {
             duration: 2000,
           });
         });
+      } else {
+        // 如果只是修改手动标注数据，则使用原来的接口
+        manualAnnotations({
+          projectId: projectInfo.projectId,
+          groupId: id,
+          visibleImageId: imagePair.visibleImage.id,
+          infraredImageId: imagePair.infraredImage.id,
+          infraredImage: {
+            annotations: manualInfraredAnnotations,
+          },
+          visibleImage: {
+            annotations: manualVisibleAnnotations,
+          },
+        })
+        .then((res) => {
+          toast({
+            title: "保存成功",
+            status: "success",
+            duration: 2000,
+          });
+        })
+        .catch((err) => {
+          toast({
+            title: "保存失败",
+            description: "请稍后重试",
+            status: "error",
+            duration: 2000,
+          });
+        });
+      }
     } catch (error) {
       console.log("error :>> ", error);
       toast({

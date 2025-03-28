@@ -153,6 +153,44 @@ class AnnotationService:
             print(f"Error saving manual annotations: {str(e)}")
             raise
 
+    def update_auto_and_manual_annotations(self, project_id: str, group_id: str,
+                                         manual_visible_annotations: List[Dict],
+                                         manual_infrared_annotations: List[Dict],
+                                         auto_visible_annotations: List[Dict],
+                                         auto_infrared_annotations: List[Dict]) -> bool:
+        """
+        同时更新自动标注和手动标注数据
+        当用户修改了自动标注的框时使用
+        """
+        try:
+            # 转换ID为整数
+            project_id_int = int(project_id)
+            group_id_int = int(group_id)
+            
+            # 更新自动标注数据
+            yolo_data = {
+                'visible': auto_visible_annotations,
+                'infrared': auto_infrared_annotations
+            }
+            auto_success = self.annotation_repository.update_auto_annotations(
+                group_id_int, 
+                yolo_data
+            )
+            
+            # 更新手动标注数据
+            manual_success = self.annotation_repository.save_manual_annotations(
+                project_id_int, 
+                group_id_int, 
+                manual_visible_annotations, 
+                manual_infrared_annotations
+            )
+            
+            return auto_success and manual_success
+            
+        except Exception as e:
+            print(f"Error updating annotations: {str(e)}")
+            raise
+
     def get_manual_annotations(self, group_id: str) -> Dict[str, List[Dict]]:
         """
         获取手动标注结果
