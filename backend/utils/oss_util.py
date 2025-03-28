@@ -53,7 +53,6 @@ class OSSUtil:
             str: 文件URL或None（失败时）
         """
         if not self.enabled or not self.bucket:
-            print("OSS功能已禁用或未正确初始化，无法上传文件")
             return None
             
         try:
@@ -88,7 +87,6 @@ class OSSUtil:
             bool: 是否删除成功
         """
         if not self.enabled or not self.bucket:
-            print("OSS功能已禁用或未正确初始化，无法删除文件")
             return False
             
         try:
@@ -123,7 +121,6 @@ class OSSUtil:
             bool: 是否删除成功
         """
         if not self.enabled or not self.bucket:
-            print("OSS功能已禁用或未正确初始化，无法删除文件夹")
             return False
             
         try:
