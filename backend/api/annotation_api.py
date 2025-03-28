@@ -44,17 +44,36 @@ def save_manual_annotations():
         visible_annotations = data.get('visibleImage', {}).get('annotations', [])
         infrared_annotations = data.get('infraredImage', {}).get('annotations', [])
         
+        # 检查是否是对自动标注的修改
+        is_auto_annotation_modified = data.get('isAutoAnnotationModified', False)
+        yolo_modifications = data.get('yoloModifications', {})
+        
         if not project_id or not group_id:
             return jsonify({'error': 'Missing projectId or groupId'}), 400
+        
+        if is_auto_annotation_modified:
+            # 如果是修改自动标注，则需要同时更新自动标注和手动标注数据
+            yolo_visible = yolo_modifications.get('visible', [])
+            yolo_infrared = yolo_modifications.get('infrared', [])
             
-        success = annotation_service.save_manual_annotations(
-            project_id, 
-            group_id, 
-            None,  # 不需要传递图片ID
-            None,
-            visible_annotations, 
-            infrared_annotations
-        )
+            success = annotation_service.update_auto_and_manual_annotations(
+                project_id, 
+                group_id,
+                visible_annotations,  # 手动标注数据
+                infrared_annotations,
+                yolo_visible,         # 修改后的自动标注数据
+                yolo_infrared
+            )
+        else:
+            # 仅更新手动标注数据
+            success = annotation_service.save_manual_annotations(
+                project_id, 
+                group_id, 
+                None,  # 不需要传递图片ID
+                None,
+                visible_annotations, 
+                infrared_annotations
+            )
         
         if success:
             return jsonify({'status': 'success'})

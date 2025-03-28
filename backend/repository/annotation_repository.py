@@ -225,4 +225,57 @@ class AnnotationRepository:
             return False
         finally:
             cursor.close()
+            conn.close()
+
+    def update_auto_annotations(self, group_id: int, annotations: Dict[str, List[Dict]]) -> bool:
+        """
+        更新自动标注数据（不删除原有数据）
+        当用户修改自动标注时使用
+        """
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        try:
+            # 更新现有的检测结果，不删除它们
+            for image_type, detections in annotations.items():
+                # 检查是否存在此类型的自动标注
+                cursor.execute(
+                    """SELECT id FROM yolo_detections 
+                    WHERE group_id = %s AND image_type = %s""",
+                    (group_id, image_type)
+                )
+                result = cursor.fetchone()
+                
+                if result:
+                    # 如果存在，则更新
+                    cursor.execute(
+                        """UPDATE yolo_detections 
+                        SET yolo_data = %s
+                        WHERE group_id = %s AND image_type = %s""",
+                        (
+                            json.dumps(detections),
+                            group_id,
+                            image_type
+                        )
+                    )
+                else:
+                    # 如果不存在，则插入
+                    cursor.execute(
+                        """INSERT INTO yolo_detections 
+                        (group_id, image_type, yolo_data)
+                        VALUES (%s, %s, %s)""",
+                        (
+                            group_id,
+                            image_type,
+                            json.dumps(detections)
+                        )
+                    )
+            
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error updating auto annotations: {str(e)}")
+            conn.rollback()
+            return False
+        finally:
+            cursor.close()
             conn.close() 
