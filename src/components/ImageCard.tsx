@@ -12,7 +12,7 @@ import {
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { Image as ImageType } from "../types/project";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { getImage } from "../services/http";
 import { byteToImage } from "../utils/common";
 import { FiTrash2 } from "react-icons/fi";
@@ -36,7 +36,7 @@ interface ImageCardProps {
   infraredNum: number;
   visibleImageName: string;
   originalName?: string;
-  onDelete?: () => void;
+  onDelete?: () => Promise<void>;
 }
 
 const ImageCard = ({
@@ -52,6 +52,7 @@ const ImageCard = ({
   const { colorMode } = useColorMode();
   const [visibleImage, setVisibleImage] = React.useState<any>(null);
   const [infraredImage, setInfraredImage] = React.useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const {
     isOpen: isDeleteAlertOpen,
     onOpen: onDeleteAlertOpen,
@@ -77,11 +78,16 @@ const ImageCard = ({
     onDeleteAlertOpen();
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (onDelete) {
-      onDelete();
+      setIsDeleting(true);
+      try {
+        await onDelete();
+      } finally {
+        setIsDeleting(false);
+        onDeleteAlertClose();
+      }
     }
-    onDeleteAlertClose();
   };
 
   return (
@@ -160,6 +166,7 @@ const ImageCard = ({
         onClose={onDeleteAlertClose}
         text="确定要删除这个图片组吗？"
         submit={handleConfirmDelete}
+        isLoading={isDeleting}
       />
     </>
   );

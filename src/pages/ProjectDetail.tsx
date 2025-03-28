@@ -119,7 +119,7 @@ const ProjectDetail = () => {
       });
   };
 
-  const handleImageGroupDelete = async (groupId: string) => {
+  const handleImageGroupDelete = async (groupId: string): Promise<void> => {
     try {
       const result = await deleteImageGroup({ groupId });
       if (result.status === 'success') {
@@ -130,6 +130,7 @@ const ProjectDetail = () => {
         });
         // 刷新项目信息，更新图片组列表
         refreshProjectInfo();
+        return Promise.resolve();
       } else {
         toast({
           title: '删除失败',
@@ -137,6 +138,7 @@ const ProjectDetail = () => {
           status: 'error',
           duration: 2000,
         });
+        return Promise.reject(new Error('删除失败'));
       }
     } catch (error) {
       toast({
@@ -145,6 +147,7 @@ const ProjectDetail = () => {
         status: 'error',
         duration: 2000,
       });
+      return Promise.reject(error);
     }
   };
 

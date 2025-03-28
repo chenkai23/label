@@ -20,6 +20,8 @@ CREATE TABLE image_groups (
     project_id BIGINT,
     visible_image_path VARCHAR(255),
     infrared_image_path VARCHAR(255),
+    visible_image_oss_url VARCHAR(255) DEFAULT NULL,
+    infrared_image_oss_url VARCHAR(255) DEFAULT NULL,
     visible_original_name VARCHAR(255),
     infrared_original_name VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

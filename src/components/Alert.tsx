@@ -10,7 +10,15 @@ import {
 } from "@chakra-ui/react";
 import React, { useRef } from "react";
 
-export function Alert({ onClose, isOpen, text, submit }) {
+interface AlertProps {
+  onClose: () => void;
+  isOpen: boolean;
+  text: string;
+  submit: () => void;
+  isLoading?: boolean;
+}
+
+export function Alert({ onClose, isOpen, text, submit, isLoading = false }: AlertProps) {
   const cancelRef = useRef<any>();
   return (
     <AlertDialog
@@ -27,8 +35,14 @@ export function Alert({ onClose, isOpen, text, submit }) {
         <AlertDialogCloseButton />
         <AlertDialogBody>{text}</AlertDialogBody>
         <AlertDialogFooter>
-          <Button onClick={onClose}>取消</Button>
-          <Button colorScheme="brand" ml={3} onClick={submit}>
+          <Button onClick={onClose} isDisabled={isLoading}>取消</Button>
+          <Button 
+            colorScheme="brand" 
+            ml={3} 
+            onClick={submit} 
+            isLoading={isLoading}
+            loadingText="删除中"
+          >
             确定
           </Button>
         </AlertDialogFooter>

@@ -12,14 +12,17 @@ class ImageRepository:
             cursor.execute(
                 """INSERT INTO image_groups 
                 (project_id, visible_image_path, infrared_image_path, 
-                visible_original_name, infrared_original_name) 
-                VALUES (%s, %s, %s, %s, %s)""",
+                visible_original_name, infrared_original_name,
+                visible_image_oss_url, infrared_image_oss_url) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s)""",
                 (
                     image_group.project_id,
                     image_group.visible_image_path,
                     image_group.infrared_image_path,
                     image_group.visible_original_name,
-                    image_group.infrared_original_name
+                    image_group.infrared_original_name,
+                    image_group.visible_image_oss_url,
+                    image_group.infrared_image_oss_url
                 )
             )
             group_id = cursor.lastrowid  # 获取自增ID
@@ -70,7 +73,9 @@ class ImageRepository:
             created_at=row['created_at'],
             updated_at=row['updated_at'],
             visible_original_name=row.get('visible_original_name'),
-            infrared_original_name=row.get('infrared_original_name')
+            infrared_original_name=row.get('infrared_original_name'),
+            visible_image_oss_url=row.get('visible_image_oss_url'),
+            infrared_image_oss_url=row.get('infrared_image_oss_url')
         )
 
     def update(self, image_group: ImageGroup) -> ImageGroup:
@@ -89,6 +94,25 @@ class ImageRepository:
             cursor.close()
             conn.close()
 
+    def update_oss_urls(self, group_id: int, visible_image_oss_url: str, infrared_image_oss_url: str) -> ImageGroup:
+        """
+        更新图片组的OSS URL
+        """
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        try:
+            cursor.execute(
+                """UPDATE image_groups 
+                SET visible_image_oss_url = %s, infrared_image_oss_url = %s
+                WHERE id = %s""",
+                (visible_image_oss_url, infrared_image_oss_url, group_id)
+            )
+            conn.commit()
+            return self.get_by_id(group_id)
+        finally:
+            cursor.close()
+            conn.close()
+
     def delete(self, group_id: int) -> bool:
         """
         删除图片组
@@ -98,14 +122,14 @@ class ImageRepository:
         try:
             # 获取图片组信息，用于删除文件
             cursor.execute(
-                "SELECT visible_image_path, infrared_image_path FROM image_groups WHERE id = %s",
+                "SELECT visible_image_path, infrared_image_path, visible_image_oss_url, infrared_image_oss_url FROM image_groups WHERE id = %s",
                 (group_id,)
             )
             result = cursor.fetchone()
             if not result:
                 return False
             
-            visible_path, infrared_path = result
+            visible_path, infrared_path, visible_oss_url, infrared_oss_url = result
             
             # 删除YOLO检测结果
             cursor.execute(

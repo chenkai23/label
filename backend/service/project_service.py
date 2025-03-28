@@ -1,11 +1,14 @@
 from typing import List, Dict
 from models.project import Project, ProjectTag
 from repository.project_repository import ProjectRepository
+from utils.oss_util import OSSUtil
+from config.settings import ENABLE_OSS
 import uuid
 
 class ProjectService:
     def __init__(self):
         self.project_repository = ProjectRepository()
+        self.oss_util = OSSUtil()
         
     def create_project(self, name: str, description: str, tags: List[dict]) -> Project:
         # 首先检查项目名是否已存在
@@ -125,11 +128,26 @@ class ProjectService:
 
     def delete_project(self, project_id: str) -> bool:
         """
-        删除项目
+        删除项目，同时删除OSS中的项目文件夹
         """
         try:
             project_id_int = int(project_id)
+            
+            # 如果启用了OSS功能，删除OSS中的项目文件夹
+            if ENABLE_OSS:
+                try:
+                    # 使用数字ID作为文件夹名
+                    oss_folder_path = str(project_id_int)
+                    success = self.oss_util.delete_folder(oss_folder_path)
+                except Exception as e:
+                    print(f"从OSS删除项目文件夹失败: {str(e)}")
+                    # 即使OSS删除失败，仍继续删除项目
+            else:
+                pass
+            
+            # 删除数据库中的项目和本地文件
             return self.project_repository.delete(project_id_int)
+            
         except ValueError:
             raise ValueError("Invalid project_id")
         except Exception as e:

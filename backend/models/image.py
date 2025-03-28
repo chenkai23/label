@@ -11,4 +11,6 @@ class ImageGroup:
     created_at: datetime
     updated_at: datetime
     visible_original_name: Optional[str] = None
-    infrared_original_name: Optional[str] = None 
+    infrared_original_name: Optional[str] = None
+    visible_image_oss_url: Optional[str] = None
+    infrared_image_oss_url: Optional[str] = None 
