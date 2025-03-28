@@ -39,7 +39,14 @@ function convertToRGBA(color, alpha) {
 }
 
 const AnnotationRect = memo(
-  ({ annotation, isSelected, onSelect, onChange, ...props }: any) => {
+  ({
+    annotation,
+    isSelected,
+    onSelect,
+    onChange,
+    onDragMove,
+    ...props
+  }: any) => {
     const shapeRef = useRef<any>(null);
     const transformerRef = useRef<any>(null);
     const { colorMode } = useColorMode();
@@ -100,6 +107,27 @@ const AnnotationRect = memo(
                 Math.abs(node.height() * scaleY),
               ],
             });
+          }}
+          onDragMove={() => {
+            const node = shapeRef.current;
+            const scaleX = node.scaleX();
+            const scaleY = node.scaleY();
+
+            node.scaleX(1);
+            node.scaleY(1);
+
+            onDragMove(
+              {
+                ...annotation,
+                bbox: [
+                  node.x(),
+                  node.y(),
+                  Math.abs(node.width() * scaleX),
+                  Math.abs(node.height() * scaleY),
+                ],
+              },
+              node
+            );
           }}
           stroke={color} // 边框颜色
           strokeWidth={isSelected ? 4 : 3} // 增加线宽
@@ -539,25 +567,79 @@ const AnnotationCanvas = ({
                         annotation.bbox[3] * imageTransform.scale,
                       ],
                     }
-                  : annotation
+                  : {
+                      ...annotation,
+                      bbox: [
+                        annotation.bbox[0] * imageTransform.scale +
+                          imageTransform.x,
+                        0,
+                        annotation.bbox[2] * imageTransform.scale,
+                        annotation.bbox[3] * imageTransform.scale,
+                      ],
+                    }
               }
               isSelected={selectedId === annotation.id}
               onSelect={setInternalSelectedId}
               onChange={(changed) => {
-                const originalAnnotation = {
-                  ...changed,
-                  bbox: [
-                    (changed.bbox[0] - imageTransform.x) / imageTransform.scale,
-                    (changed.bbox[1] - imageTransform.y) / imageTransform.scale,
-                    changed.bbox[2] / imageTransform.scale,
-                    changed.bbox[3] / imageTransform.scale,
-                  ],
-                };
-                const newAnnotations = annotations.map((a) =>
-                  a.id === changed.id ? originalAnnotation : a
-                );
-                updateAnnotations(newAnnotations);
-                syncAnnotation?.(originalAnnotation);
+                if (
+                  (changed.bbox[1] - imageTransform.y) / imageTransform.scale <
+                  0
+                ) {
+                  const originalAnnotation = {
+                    ...changed,
+                    bbox: [
+                      (changed.bbox[0] - imageTransform.x) /
+                        imageTransform.scale,
+                      0,
+                      changed.bbox[2] / imageTransform.scale,
+                      changed.bbox[3] / imageTransform.scale,
+                    ],
+                  };
+                  const newAnnotations = annotations.map((a) =>
+                    a.id === changed.id ? originalAnnotation : a
+                  );
+                  updateAnnotations(newAnnotations);
+                  syncAnnotation?.(originalAnnotation);
+                } else {
+                  const originalAnnotation = {
+                    ...changed,
+                    bbox: [
+                      (changed.bbox[0] - imageTransform.x) /
+                        imageTransform.scale,
+                      (changed.bbox[1] - imageTransform.y) /
+                        imageTransform.scale,
+                      changed.bbox[2] / imageTransform.scale,
+                      changed.bbox[3] / imageTransform.scale,
+                    ],
+                  };
+                  const newAnnotations = annotations.map((a) =>
+                    a.id === changed.id ? originalAnnotation : a
+                  );
+                  updateAnnotations(newAnnotations);
+                  syncAnnotation?.(originalAnnotation);
+                }
+              }}
+              onDragMove={(changed, node) => {
+                if (
+                  (changed.bbox[1] - imageTransform.y) / imageTransform.scale <
+                  0
+                ) {
+                  const originalAnnotation = {
+                    ...changed,
+                    bbox: [
+                      (changed.bbox[0] - imageTransform.x) /
+                        imageTransform.scale,
+                      0,
+                      changed.bbox[2] / imageTransform.scale,
+                      changed.bbox[3] / imageTransform.scale,
+                    ],
+                  };
+                  const newAnnotations = annotations.map((a) =>
+                    a.id === changed.id ? originalAnnotation : a
+                  );
+                  setAnnotations(newAnnotations);
+                  node.y(imageTransform.y);
+                }
               }}
               draggable={tool === "move"}
             />
