@@ -178,6 +178,48 @@ python database/init_db.py
 - 创建所需的表结构
 - 自动处理表已存在的情况
 
+## 模型配置
+
+### 模型文件说明
+
+系统使用三个预训练模型：
+- `yolov8n.pt`: YOLOv8基础模型
+- `RGBDet.pt`: 可见光目标检测模型
+- `IRDet.pt`: 红外目标检测模型
+
+### 模型配置步骤
+
+1. 下载模型文件
+   - 从项目仓库下载模型文件
+   - 将模型文件放置在`backend/weights/`目录下
+
+2. 模型文件结构
+```
+backend/
+└── weights/
+    ├── yolov8n.pt    # YOLOv8基础模型
+    ├── RGBDet.pt     # 可见光目标检测模型
+    └── IRDet.pt      # 红外目标检测模型
+```
+
+3. 模型使用说明
+   - 可见光图像使用`RGBDet.pt`模型
+   - 红外图像使用`IRDet.pt`模型
+   - 系统会自动根据图像类型选择对应的模型
+
+4. 模型配置（settings.py）
+   - 配置文件位置：`backend/config/settings.py`
+   - 主要配置项：
+     ```python
+     # YOLO模型配置
+     RGB_MODEL_PATH = os.path.join('weights', 'RGBDet.pt')  # 可见光模型路径
+     IR_MODEL_PATH = os.path.join('weights', 'IRDet.pt')    # 红外模型路径
+     ```
+   - 配置说明：
+     - 模型路径相对于backend目录
+     - 如需使用自定义模型，修改对应的MODEL_PATH
+     - 确保路径与weights目录下的模型文件名一致
+
 ## 项目特性
 
 - 支持可见光和红外图像的配对上传和标注
