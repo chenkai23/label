@@ -24,6 +24,7 @@ interface AnnotationCanvasProps {
   onAnnotationChange?: (annotations: Annotation[]) => void;
   syncAnnotation?: (annotation: Annotation) => void;
   setImagePair: Function;
+  onDelete: Function;
 }
 
 function convertToRGBA(color, alpha) {
@@ -140,6 +141,7 @@ const AnnotationCanvas = ({
   onAnnotationChange,
   syncAnnotation,
   setImagePair,
+  onDelete,
 }: AnnotationCanvasProps) => {
   const stageRef = useRef<any>(null);
   const [imageObj, setImageObj] = useState<HTMLImageElement | null>(null);
@@ -386,6 +388,11 @@ const AnnotationCanvas = ({
           setInternalSelectedId(null);
           break;
         case "delete":
+          const newAnnotations = annotations.filter((a) => a.id === selectedId);
+          newAnnotations.forEach((annotations) => {
+            onDelete(selectedId, annotations.id.split("_")[0]);
+          });
+          break;
         case "backspace":
           if (selectedId) {
             const newAnnotations = annotations.filter(
