@@ -81,11 +81,6 @@ REACT_APP_API_BASE_URL="http://后端服务器IP:5050/api/"
 npm run dev
 ```
 
-5. 构建生产版本
-```bash
-npm run build
-```
-
 ### 后端设置
 
 1. 安装Python 3.8+
@@ -93,6 +88,7 @@ npm run build
 2. 创建虚拟环境（推荐）
 ```bash
 conda create -n label python=3.8 -y
+conda activate label
 ```
 
 3. 安装依赖
