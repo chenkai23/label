@@ -66,7 +66,7 @@ const LabelPanel = ({
       (item) => item.id === currentselectedBoxId
     );
     return labelInfo;
-  }, [currentselectedBoxId, visibleImage]);
+  }, [currentselectedBoxId, visibleImage, infraredImage]);
   const handleAddLabel = (label: string) => {
     if (!label.trim()) return;
 

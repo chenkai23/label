@@ -324,7 +324,6 @@ const AnnotationCanvas = ({
         }
         return ann;
       });
-
       setAnnotations(newAnnotations);
     },
     [isDrawing, startPos, annotations, getImageTransform]
@@ -519,15 +518,21 @@ const AnnotationCanvas = ({
           {annotations.map((annotation) => (
             <AnnotationRect
               key={annotation.id}
-              annotation={{
-                ...annotation,
-                bbox: [
-                  annotation.bbox[0] * imageTransform.scale + imageTransform.x,
-                  annotation.bbox[1] * imageTransform.scale + imageTransform.y,
-                  annotation.bbox[2] * imageTransform.scale,
-                  annotation.bbox[3] * imageTransform.scale,
-                ],
-              }}
+              annotation={
+                annotation.bbox[1] * imageTransform.scale + imageTransform.y > 0
+                  ? {
+                      ...annotation,
+                      bbox: [
+                        annotation.bbox[0] * imageTransform.scale +
+                          imageTransform.x,
+                        annotation.bbox[1] * imageTransform.scale +
+                          imageTransform.y,
+                        annotation.bbox[2] * imageTransform.scale,
+                        annotation.bbox[3] * imageTransform.scale,
+                      ],
+                    }
+                  : annotation
+              }
               isSelected={selectedId === annotation.id}
               onSelect={setInternalSelectedId}
               onChange={(changed) => {

@@ -16,7 +16,13 @@ import {
 } from "@chakra-ui/react";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiZoomIn, FiZoomOut, FiMaximize, FiArrowRight } from "react-icons/fi";
+import {
+  FiArrowLeft,
+  FiZoomIn,
+  FiZoomOut,
+  FiMaximize,
+  FiArrowRight,
+} from "react-icons/fi";
 import { useStore } from "../store";
 import AnnotationCanvas from "../components/AnnotationCanvas";
 import AnnotationToolbar from "../components/AnnotationToolbar";
@@ -97,7 +103,7 @@ const AnnotationPage = () => {
         setPresets(res?.tags);
         // 获取所有图片组ID并排序
         if (res?.imageGroups) {
-          const groupIds = res.imageGroups.map(group => group.id.toString());
+          const groupIds = res.imageGroups.map((group) => group.id.toString());
           setAllGroupIds(groupIds.sort((a, b) => Number(a) - Number(b)));
         }
         setLoading(false);
@@ -150,7 +156,7 @@ const AnnotationPage = () => {
 
   // 获取当前组在所有组中的索引
   const currentIndex = useMemo(() => {
-    return allGroupIds.indexOf(id);
+    return allGroupIds.indexOf(id!);
   }, [allGroupIds, id]);
 
   // 计算上一组和下一组的ID
@@ -159,9 +165,11 @@ const AnnotationPage = () => {
   }, [allGroupIds, currentIndex]);
 
   const nextGroupId = useMemo(() => {
-    return currentIndex < allGroupIds.length - 1 ? allGroupIds[currentIndex + 1] : null;
+    return currentIndex < allGroupIds.length - 1
+      ? allGroupIds[currentIndex + 1]
+      : null;
   }, [allGroupIds, currentIndex]);
-  
+
   // 处理导航到上一组和下一组
   const handleNavigateToPrev = useCallback(() => {
     if (prevGroupId) {
@@ -270,27 +278,35 @@ const AnnotationPage = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // 忽略输入框的键盘事件
-      if (e.target instanceof HTMLInputElement || 
-          e.target instanceof HTMLTextAreaElement) {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
         return;
       }
-      
+
       // 左箭头 - 上一组
-      if (e.key === 'ArrowLeft' && prevGroupId && !loading) {
+      if (e.key === "ArrowLeft" && prevGroupId && !loading) {
         handleNavigateToPrev();
       }
-      
+
       // 右箭头 - 下一组
-      if (e.key === 'ArrowRight' && nextGroupId && !loading) {
+      if (e.key === "ArrowRight" && nextGroupId && !loading) {
         handleNavigateToNext();
       }
     };
-    
-    window.addEventListener('keydown', handleKeyDown);
+
+    window.addEventListener("keydown", handleKeyDown);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [prevGroupId, nextGroupId, loading, handleNavigateToPrev, handleNavigateToNext]);
+  }, [
+    prevGroupId,
+    nextGroupId,
+    loading,
+    handleNavigateToPrev,
+    handleNavigateToNext,
+  ]);
 
   if (
     !projectInfo ||
@@ -493,12 +509,12 @@ const AnnotationPage = () => {
             handleAnnotationChange(newAnnotations, type);
           }}
         />
-        
+
         {/* 图片组切换按钮 */}
-        <Flex 
-          position="absolute" 
-          bottom="20px" 
-          right="20px" 
+        <Flex
+          position="absolute"
+          bottom="20px"
+          right="20px"
           zIndex="100"
           gap={3}
           bg={colorMode === "dark" ? "gray.700" : "gray.100"}
@@ -518,13 +534,13 @@ const AnnotationPage = () => {
               variant={colorMode === "dark" ? "solid" : "outline"}
             />
           </Tooltip>
-          
+
           {allGroupIds.length > 0 && (
             <Text fontSize="sm" fontWeight="medium" px={1}>
               {currentIndex + 1}/{allGroupIds.length}
             </Text>
           )}
-          
+
           <Tooltip label="下一组" placement="top">
             <IconButton
               aria-label="下一组"
