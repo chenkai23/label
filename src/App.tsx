@@ -13,7 +13,7 @@ import AnnotationPage from "./pages/Annotation";
 import React from "react";
 function App() {
   return (
-    <Router>
+    <Router basename="/labelProject">
       <MainLayout>
         <Routes>
           <Route path="/" element={<Navigate to="/projects" replace />} />

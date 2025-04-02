@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
       "process.env": env,
     },
     root: path.join(__dirname, "./"), // 显式指定根目录
-    base: "./", // 确保使用相对路径
+    base: "/labelProject/", // 确保使用相对路径
     build: {
       outDir: "dist", // 输出目录
       assetsDir: "assets", // 静态资源目录
