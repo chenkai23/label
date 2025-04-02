@@ -256,3 +256,11 @@ backend/
 - 标注数据的导入和导出
 - 可选的阿里云 OSS 存储支持
 - 项目和标签管理
+
+## 部署命令
+
+- conda activate label
+- pip install gunicorn
+- gunicorn -c gunicorn_label.conf.py app:app 该命令是启动该项目
+- ps aux | grep "label" 查询正在运行的 label 进行
+- kill -9 xxx 清除该进程，以达到关闭该项目的目的
