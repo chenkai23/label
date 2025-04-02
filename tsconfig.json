@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "es2016",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "outDir": "./dist", // 指定输出目录为与src平级的dist文件夹
+    "rootDir": "./src", // 指定源代码根目录为src文件夹
+    "jsx": "react-jsx", // React 17+ 推荐使用
+    "lib": ["ESNext", "DOM"] // 提供 JSX 和 DOM 类型支持
+  },
+  "include": ["src/**/*"], // 包含src目录下的所有文件
+  "exclude": ["node_modules"] // 排除node_modules目录
+}
