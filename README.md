@@ -106,6 +106,7 @@ conda activate label
 ```bash
 cd backend
 pip install -r requirements.txt
+pip install dill
 pip install ultralytics==8.3.81
 ```
 
