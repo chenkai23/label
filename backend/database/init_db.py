@@ -38,7 +38,7 @@ def init_database():
         
         # 读取并执行 schema.sql
         schema_path = os.path.join(os.path.dirname(__file__), 'schema.sql')
-        with open(schema_path, 'r') as f:
+        with open(schema_path, 'r', encoding='utf-8') as f:
             # 分割SQL语句
             statements = f.read().split(';')
             for statement in statements:
